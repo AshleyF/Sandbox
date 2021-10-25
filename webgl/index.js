@@ -11,6 +11,10 @@ function init() {
 
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.enable(gl.DEPTH_TEST);
+        gl.enable(gl.CULL_FACE);
+        gl.frontFace(gl.CCW);
+        gl.cullFace(gl.BACK);
         return gl;
     }
 
@@ -52,10 +56,18 @@ function init() {
         return program;
     }
 
-    function loadBuffer(vertices, gl) {
+    function loadBuffer(data, target, gl) {
         var buffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+        gl.bindBuffer(target, buffer);
+        gl.bufferData(target, data, gl.STATIC_DRAW);
+    }
+
+    function loadArrayBuffer(vertices, gl) {
+        loadBuffer(vertices, gl.ARRAY_BUFFER, gl);
+    }
+
+    function loadElementBuffer(elements, gl) {
+        loadBuffer(elements, gl.ELEMENT_ARRAY_BUFFER, gl);
     }
 
     function enableAttribute(name, size, offset, cols, gl, program) {
@@ -93,13 +105,50 @@ function init() {
     var gl = initWebGl("canvas");
     var program = initShaders(vertexShaderSource, fragmentShaderSource, gl);
 
-    var triangleVertices = new Float32Array([
-         0.0,  0.5, 0.0,  1.0, 1.0, 0.0,
-        -0.5, -0.5, 0.0,  0.7, 0.0, 1.0,
-         0.5, -0.5, 0.0,  0.1, 1.0, 0.6,
-    ]);
+    var boxVertices = new Float32Array([
+		-1.0, 1.0, -1.0,   0.5, 0.5, 0.5, // Top
+		-1.0, 1.0, 1.0,    0.5, 0.5, 0.5,
+		1.0, 1.0, 1.0,     0.5, 0.5, 0.5,
+		1.0, 1.0, -1.0,    0.5, 0.5, 0.5,
+		-1.0, 1.0, 1.0,    0.75, 0.25, 0.5, // Left
+		-1.0, -1.0, 1.0,   0.75, 0.25, 0.5,
+		-1.0, -1.0, -1.0,  0.75, 0.25, 0.5,
+		-1.0, 1.0, -1.0,   0.75, 0.25, 0.5,
+		1.0, 1.0, 1.0,    0.25, 0.25, 0.75, // Right
+		1.0, -1.0, 1.0,   0.25, 0.25, 0.75,
+		1.0, -1.0, -1.0,  0.25, 0.25, 0.75,
+		1.0, 1.0, -1.0,   0.25, 0.25, 0.75,
+		1.0, 1.0, 1.0,    1.0, 0.0, 0.15, // Front
+		1.0, -1.0, 1.0,    1.0, 0.0, 0.15,
+		-1.0, -1.0, 1.0,    1.0, 0.0, 0.15,
+		-1.0, 1.0, 1.0,    1.0, 0.0, 0.15,
+		1.0, 1.0, -1.0,    0.0, 1.0, 0.15, // Back
+		1.0, -1.0, -1.0,    0.0, 1.0, 0.15,
+		-1.0, -1.0, -1.0,    0.0, 1.0, 0.15,
+		-1.0, 1.0, -1.0,    0.0, 1.0, 0.15,
+		-1.0, -1.0, -1.0,   0.5, 0.5, 1.0, // Bottom
+		-1.0, -1.0, 1.0,    0.5, 0.5, 1.0,
+		1.0, -1.0, 1.0,     0.5, 0.5, 1.0,
+		1.0, -1.0, -1.0,    0.5, 0.5, 1.0,
+	]);
 
-    loadBuffer(triangleVertices, gl);
+	var boxIndices = new Uint16Array([
+		0, 1, 2, // Top
+		0, 2, 3,
+		5, 4, 6, // Left
+		6, 4, 7,
+		8, 9, 10, // Right
+		8, 10, 11,
+		13, 12, 14, // Front
+		15, 14, 12,
+		16, 17, 18, // Back
+		16, 18, 19,
+		21, 20, 22, // Bottom
+		22, 20, 23
+	]);
+
+    loadArrayBuffer(boxVertices, gl);
+    loadElementBuffer(boxIndices, gl);
 
     const cols = 6;
     var offset = 0;
@@ -111,24 +160,29 @@ function init() {
     var projMatrix = new Float32Array(16);
 
     glMatrix.mat4.identity(worldMatrix);
-    glMatrix.mat4.lookAt(viewMatrix, [0, 0, -2], [0, 0, 0], [0, 1, 0]);
+    glMatrix.mat4.lookAt(viewMatrix, [0, 0, -5], [0, 0, 0], [0, 1, 0]);
 	glMatrix.mat4.perspective(projMatrix, Math.PI / 4, 800 / 600, 0.1, 1000.0);
 
     enableUniformMatrix("matWorld", worldMatrix);
     enableUniformMatrix("matView", viewMatrix);
     enableUniformMatrix("matProj", projMatrix);
 
+    var xRotationMatrix = new Float32Array(16);
+    var yRotationMatrix = new Float32Array(16);
+
     var identityMatrix = new Float32Array(16);
     glMatrix.mat4.identity(identityMatrix);
-
     var loop = function() {
         var angle = performance.now() / 1000 / 6 * 2 * Math.PI;
-        glMatrix.mat4.rotate(worldMatrix, identityMatrix, angle, [0, 1, 0]);
+        glMatrix.mat4.rotate(xRotationMatrix, identityMatrix, angle, [0, 1, 0]);
+        glMatrix.mat4.rotate(yRotationMatrix, identityMatrix, angle / 4, [1, 0, 0]);
+        glMatrix.mat4.mul(worldMatrix, yRotationMatrix, xRotationMatrix);
         enableUniformMatrix("matWorld", worldMatrix);
 
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        gl.drawArrays(gl.TRIANGLES, 0, triangleVertices.length / cols);
+        // gl.drawArrays(gl.TRIANGLES, 0, triangleVertices.length / cols);
+        gl.drawElements(gl.TRIANGLES, boxIndices.length, gl.UNSIGNED_SHORT, 0);
 
         requestAnimationFrame(loop);
     }
