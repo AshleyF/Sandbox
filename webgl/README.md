@@ -39,6 +39,4 @@ Using [glMatrix](https://glmatrix.net/)
 
 ## 3 [Textured Cube](https://youtu.be/hpnd11doMgc)
 
-Using this [crate.png](https://github.com/sessamekesh/IndigoCS-webgl-tutorials/blob/master/03%20-%20Textured%20Cube/crate.png)
-
 To avoid cross-source scripting errors, use `python -m SimpleHTTPServer` and hit `http://localhost:8000`.
