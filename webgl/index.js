@@ -85,51 +85,52 @@ function init() {
     var vertexShaderSource =
         'precision mediump float;' +
         'attribute vec3 vertPosition;' +
-        'attribute vec3 vertColor;' +
-        'varying vec3 fragColor;' +
+        'attribute vec2 vertTextCoords;' +
+        'varying vec2 fragTextCoords;' +
         'uniform mat4 matWorld;' +
         'uniform mat4 matView;' +
         'uniform mat4 matProj;' +
         'void main() {' +
         '  gl_Position = matProj * matView * matWorld * vec4(vertPosition, 1.0);' +
-        '  fragColor = vertColor;' +
+        '  fragTextCoords = vertTextCoords;' +
         '}';
 
     var fragmentShaderSource =
         'precision mediump float;' +
-        'varying vec3 fragColor;' +
+        'varying vec2 fragTextCoords;' +
+        'uniform sampler2D sampler;' +
         'void main() {' +
-        '  gl_FragColor = vec4(fragColor, 1.0);' +
+        '  gl_FragColor = texture2D(sampler, fragTextCoords);' +
         '}';
 
     var gl = initWebGl("canvas");
     var program = initShaders(vertexShaderSource, fragmentShaderSource, gl);
 
     var boxVertices = new Float32Array([
-		-1.0, 1.0, -1.0,   0.5, 0.5, 0.5, // Top
-		-1.0, 1.0, 1.0,    0.5, 0.5, 0.5,
-		1.0, 1.0, 1.0,     0.5, 0.5, 0.5,
-		1.0, 1.0, -1.0,    0.5, 0.5, 0.5,
-		-1.0, 1.0, 1.0,    0.75, 0.25, 0.5, // Left
-		-1.0, -1.0, 1.0,   0.75, 0.25, 0.5,
-		-1.0, -1.0, -1.0,  0.75, 0.25, 0.5,
-		-1.0, 1.0, -1.0,   0.75, 0.25, 0.5,
-		1.0, 1.0, 1.0,    0.25, 0.25, 0.75, // Right
-		1.0, -1.0, 1.0,   0.25, 0.25, 0.75,
-		1.0, -1.0, -1.0,  0.25, 0.25, 0.75,
-		1.0, 1.0, -1.0,   0.25, 0.25, 0.75,
-		1.0, 1.0, 1.0,    1.0, 0.0, 0.15, // Front
-		1.0, -1.0, 1.0,    1.0, 0.0, 0.15,
-		-1.0, -1.0, 1.0,    1.0, 0.0, 0.15,
-		-1.0, 1.0, 1.0,    1.0, 0.0, 0.15,
-		1.0, 1.0, -1.0,    0.0, 1.0, 0.15, // Back
-		1.0, -1.0, -1.0,    0.0, 1.0, 0.15,
-		-1.0, -1.0, -1.0,    0.0, 1.0, 0.15,
-		-1.0, 1.0, -1.0,    0.0, 1.0, 0.15,
-		-1.0, -1.0, -1.0,   0.5, 0.5, 1.0, // Bottom
-		-1.0, -1.0, 1.0,    0.5, 0.5, 1.0,
-		1.0, -1.0, 1.0,     0.5, 0.5, 1.0,
-		1.0, -1.0, -1.0,    0.5, 0.5, 1.0,
+		-1.0,  1.0, -1.0,  0, 0, // Top
+		-1.0,  1.0,  1.0,  0, 1,
+		 1.0,  1.0,  1.0,  1, 1,
+		 1.0,  1.0, -1.0,  1, 0,
+		-1.0,  1.0,  1.0,  0, 0, // Left
+		-1.0, -1.0,  1.0,  1, 0,
+		-1.0, -1.0, -1.0,  1, 1,
+		-1.0,  1.0, -1.0,  0, 1,
+		 1.0,  1.0,  1.0,  1, 1, // Right
+		 1.0, -1.0,  1.0,  0, 1,
+		 1.0, -1.0, -1.0,  0, 0,
+		 1.0,  1.0, -1.0,  1, 0,
+		 1.0,  1.0,  1.0,  1, 1, // Front
+		 1.0, -1.0,  1.0,  1, 0,
+		-1.0, -1.0,  1.0,  0, 0,
+		-1.0,  1.0,  1.0,  0, 1,
+		 1.0,  1.0, -1.0,  0, 0, // Back
+		 1.0, -1.0, -1.0,  0, 1,
+		-1.0, -1.0, -1.0,  1, 1,
+		-1.0,  1.0, -1.0,  1, 0,
+		-1.0, -1.0, -1.0,  1, 1, // Bottom
+		-1.0, -1.0,  1.0,  1, 0,
+		 1.0, -1.0,  1.0,  0, 0,
+		 1.0, -1.0, -1.0,  0, 1,
 	]);
 
 	var boxIndices = new Uint16Array([
@@ -150,10 +151,23 @@ function init() {
     loadArrayBuffer(boxVertices, gl);
     loadElementBuffer(boxIndices, gl);
 
-    const cols = 6;
+    const cols = 5;
     var offset = 0;
     offset = enableAttribute("vertPosition", 3, offset, cols, gl, program);
-    offset = enableAttribute("vertColor", 3, offset, cols, gl, program);
+    offset = enableAttribute("vertTextCoords", 2, offset, cols, gl, program);
+
+
+    var boxTexture = gl.createTexture();
+    var img = new Image();
+    img.onload = function() {
+        gl.bindTexture(gl.TEXTURE_2D, boxTexture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    }
+    img.src = "./tracey.jpg";
 
 	var worldMatrix = new Float32Array(16);
 	var viewMatrix = new Float32Array(16);
@@ -181,7 +195,8 @@ function init() {
 
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        // gl.drawArrays(gl.TRIANGLES, 0, triangleVertices.length / cols);
+        gl.bindTexture(gl.TEXTURE_2D, boxTexture);
+        gl.activeTexture(gl.TEXTURE0);
         gl.drawElements(gl.TRIANGLES, boxIndices.length, gl.UNSIGNED_SHORT, 0);
 
         requestAnimationFrame(loop);
