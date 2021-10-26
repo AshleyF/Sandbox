@@ -2,7 +2,7 @@
 
 Working through [this WebGL tutorial series](https://www.youtube.com/playlist?list=PLjcVFFANLS5zH_PeKC6I8p0Pt1hzph_rt).
 
-## [Setup and Triangle](https://www.youtube.com/playlist?list=PLjcVFFANLS5zH_PeKC6I8p0Pt1hzph_rt)
+## 1 [Setup and Triangle](https://www.youtube.com/playlist?list=PLjcVFFANLS5zH_PeKC6I8p0Pt1hzph_rt)
 
 Essentially, taking these 15 floats and writing a vertex and fragment shader to render a colored triangle.
 
@@ -32,3 +32,13 @@ void main() {
   gl_FragColor = vec4(fragColor, 1.0);
 }
 ```
+
+## 2 [Rotating 3D Cube](https://youtu.be/3yLL9ADo-ko)
+
+Using [glMatrix](https://glmatrix.net/)
+
+## 3 [Textured Cube](https://youtu.be/hpnd11doMgc)
+
+Using this [crate.png](https://github.com/sessamekesh/IndigoCS-webgl-tutorials/blob/master/03%20-%20Textured%20Cube/crate.png)
+
+To avoid cross-source scripting errors, use `python -m SimpleHTTPServer` and hit `http://localhost:8000`.
