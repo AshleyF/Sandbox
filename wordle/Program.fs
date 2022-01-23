@@ -17,7 +17,7 @@ let solver (words : string seq) constraints =
                 Seq.fold countLetter // fold over single word
             Seq.fold countLettersInWord Map.empty candidates // fold over all words
 
-        let rank word = // rank word by letter frequency and number of distinct letters
+        let rank word = // rank first by distinct letters, then vowel count, then letter frequency
             let vowels = Seq.filter (fun (c : char) -> "AEIOU".Contains(c)) word |> Seq.length // number of vowels
             let distinct = Seq.distinct word |> Seq.length // num distinct letters
             let score = word |> Seq.map (fun c -> Map.find c frequency) |> Seq.sum // sum of letter frequencies
