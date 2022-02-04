@@ -4,7 +4,7 @@ open System
 open System.IO
 
 // generate ranked possible solutions, given a set of constraints and initial list
-let solver (words : string seq) constraints =
+let solver len (words : string seq) constraints =
     let solutions constraints words =
         let candidates = // candidate solutions from the dictionary
             let apply w = Seq.forall (fun c -> Seq.toArray w |> c) constraints
@@ -30,7 +30,7 @@ let solver (words : string seq) constraints =
     words
     |> Seq.map (fun w -> w.ToUpper()) // normalize case
     |> Seq.distinct // remove duplicates
-    |> Seq.filter (fun w -> w.Length = 5) // 5-letter/digit only
+    |> Seq.filter (fun w -> w.Length = len) // n-characters only
     |> solutions constraints
 
 // helper function-generating functions for building the constraints list
@@ -46,7 +46,7 @@ let wordle =
     "words-cheat.txt" // from source: https://wordlegame.org/assets/js/wordle/en.js
     |> File.ReadAllLines
     |> Seq.filter (Seq.forall Char.IsLetter) // including only letters
-    |> solver
+    |> solver 5
 
 let wordleDemo () =
     [ // 1st guess: AROSE (highest ranked of 5883 potential solutions)
@@ -65,7 +65,7 @@ let wordleDemo () =
 let primel =
     Seq.fold (fun p n -> List.filter (fun i -> i % n <> 0) p) [10007..99999] [2..317] // 5-digit primes
     |> Seq.map (fun n -> n.ToString())
-    |> solver
+    |> solver 5
 
 let primelDemo () =
     [   // 1st guess: 12379
@@ -82,7 +82,75 @@ let primelDemo () =
         yellow '5' 0
         green '8' 2
         green '3' 3
-    ] |> primel// -> must be 65839
+    ] |> primel // -> must be 65839
 
-wordleDemo ()
+// --------------------------------------------------------------------------------
+// Mathler (https://www.mathler.com/)
+
+// simple arithematic expression tree
+type Expr =
+    | Lit of float
+    | Add of Expr * Expr
+    | Sub of Expr * Expr
+    | Mul of Expr * Expr
+    | Div of Expr * Expr
+
+let mathler number =
+    let rec eval = // evaluate and print expression
+        let apply op name x y div =
+            let x', x'' = eval x
+            let y', y'' = eval y
+            if div && y' = 0. then infinity, "DIV BY ZERO"
+            else  op x' y', sprintf "%s%c%s" x'' name y''
+        function
+        | Lit x -> x, sprintf "%i" (int x)
+        | Add (x, y) -> apply (+) '+' x y false
+        | Sub (x, y) -> apply (-) '-' x y false
+        | Mul (x, y) -> apply (*) '*' x y false
+        | Div (x, y) -> apply (/) '/' x y true
+    // (Add (Lit 3., (Sub (Lit 4., Lit 5.)))) |> eval |> printfn "Result: %A" // (2., "3+4-5")
+    let expressions =
+        let nums = [-999..999] |> List.map float |> List.map Lit |> List.map (fun n -> n, eval n)
+        let rec expressions' exprs = seq {
+            let exprs' = seq {
+                for e in exprs do
+                    let len = e |> snd |> snd |> String.length
+                    for n in nums |> List.filter (fun (_, (_, s)) -> String.length s < 6 - len) do
+                        for op in [Add; Sub; Mul; Div] do
+                            yield op (fst e, fst n) }
+            let maxlen n (_, (_, s)) = String.length s <= n
+            let possible =
+                exprs'
+                |> Seq.map (fun e -> e, eval e)
+                |> Seq.filter (maxlen 6)
+                |> Seq.toList
+            if possible.Length > 0 then
+                yield! possible |> Seq.map fst
+                let short = possible |> List.filter (maxlen 4)
+                yield! short |> expressions' }
+        nums |> expressions'
+    expressions
+    |> Seq.map eval
+    |> Seq.filter (fun (x, s) -> x = float number && String.length s = 6)
+    |> Seq.map snd
+    |> Seq.toList
+    |> solver 6
+
+let mathlerDemo () =
+    [   // 1st guess: 1-5+76
+        exclude "15+6"
+        yellow '-' 1
+        yellow '7' 4
+        // 2nd guess: 3*27-9
+        yellow '3' 0
+        yellow '*' 1
+        yellow '2' 2
+        yellow '7' 3
+        green '-' 4
+        green '9' 5
+    ] |> mathler 72 // must be 27*3-9 = 72
+
+// wordleDemo ()
 // primelDemo ()
+mathlerDemo ()
+
