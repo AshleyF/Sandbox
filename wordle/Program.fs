@@ -87,8 +87,7 @@ let primelDemo () =
 // --------------------------------------------------------------------------------
 // Mathler (https://www.mathler.com/)
 
-// simple arithematic expression tree
-type Expr =
+type Expr = // arithematic expression tree
     | Lit of float
     | Add of Expr * Expr
     | Sub of Expr * Expr
@@ -96,7 +95,7 @@ type Expr =
     | Div of Expr * Expr
 
 let mathler number =
-    let rec eval = // evaluate and print expression
+    let rec eval = // evaluate and print expression e.g. (Add (Lit 3., (Sub (Lit 4., Lit 5.)))) -> (2., "3+4-5")
         let apply op name x y div =
             let x', x'' = eval x
             let y', y'' = eval y
@@ -108,40 +107,38 @@ let mathler number =
         | Sub (x, y) -> apply (-) '-' x y false
         | Mul (x, y) -> apply (*) '*' x y false
         | Div (x, y) -> apply (/) '/' x y true
-    // (Add (Lit 3., (Sub (Lit 4., Lit 5.)))) |> eval |> printfn "Result: %A" // (2., "3+4-5")
-    let expressions =
+    let len op n (_, (_, s)) = op (String.length s) n
+    let expressions = // generate expressions
         let nums = [-999..999] |> List.map float |> List.map Lit |> List.map (fun n -> n, eval n)
         let rec expressions' exprs = seq {
             let exprs' = seq {
-                for e in exprs do
+                for e in exprs do // exprs combined with ops and nums
                     let len = e |> snd |> snd |> String.length
                     for n in nums |> List.filter (fun (_, (_, s)) -> String.length s < 6 - len) do
                         for op in [Add; Sub; Mul; Div] do
                             yield op (fst e, fst n) }
-            let maxlen n (_, (_, s)) = String.length s <= n
-            let possible =
+            let candidates = // generate candidates with <= 6 chars
                 exprs'
                 |> Seq.map (fun e -> e, eval e)
-                |> Seq.filter (maxlen 6)
+                |> Seq.filter (len (<=) 6)
                 |> Seq.toList
-            if possible.Length > 0 then
-                yield! possible |> Seq.map fst
-                let short = possible |> List.filter (maxlen 4)
-                yield! short |> expressions' }
+            if candidates.Length > 0 then
+                yield! candidates |> Seq.filter (len (=) 6) |> Seq.map fst // yield 6-char expressions
+                yield! candidates |> List.filter (len (<=) 4) |> expressions' } // continue with 4-char combined with new op/num
         nums |> expressions'
     expressions
     |> Seq.map eval
-    |> Seq.filter (fun (x, s) -> x = float number && String.length s = 6)
+    |> Seq.filter (fun (x, _) -> x = float number) // must equal number (e.g. 72 in example below)
     |> Seq.map snd
     |> Seq.toList
     |> solver 6
 
 let mathlerDemo () =
-    [   // 1st guess: 1-5+76
+    [   // 1st guess: 1-5+76 (of 1700 possible solutions)
         exclude "15+6"
         yellow '-' 1
         yellow '7' 4
-        // 2nd guess: 3*27-9
+        // 2nd guess: 3*27-9 (of 29 possible solutions)
         yellow '3' 0
         yellow '*' 1
         yellow '2' 2
