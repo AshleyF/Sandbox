@@ -1,4 +1,4 @@
-﻿// solver for Wordle and Primel
+﻿// solver for Wordle, Primel and Mathler
 
 open System
 open System.IO
