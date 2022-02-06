@@ -13,3 +13,7 @@ An experiment to show that various "chart watching" techniques don't work to pic
 ## [Wordle](./wordle)
 
 A tool to help solve Wordle puzzles.
+
+## [BriefDraw](./briefdraw)
+
+A PostScript-like Brief implementation for building SVG files (to be laser cutting).

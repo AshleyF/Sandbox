@@ -1,42 +1,37 @@
 <!DOCTYPE html>
-<title>PathKit (Skia's Geometry + WASM)</title>
+<title>BriefDraw</title>
 <meta charset="utf-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
   svg, canvas {
     border: 1px dashed #AAA;
   }
 
   canvas {
-    width: 200px;
-    height: 200px;
+    width: 400px;
+    height: 400px;
   }
-
-  canvas.big {
-    width: 300px;
-    height: 300px;
-  }
-
 </style>
-
 <h2>Brief Example</h2>
-<!--svg id=svg0 xmlns='http://www.w3.org/2000/svg' width=200 height=200></svg-->
 <canvas id=canvas0 style="width:400px;height:400px"></canvas>
 <textarea id=brief cols=80 rows=26>
-path
-200 300 move
-500 800 line
-800 300 line
-close
-path
+[ path
 200 700 move
 500 200 line
 800 700 line
-close
+close ] 'triangle1 def
+
+[ path
+200 300 move
+500 800 line
+800 300 line
+close ] 'triangle2 def
+
+triangle1 triangle2
+
+union
 \intersect
-\union
 \difference
 \xor
 </textarea>
@@ -63,43 +58,13 @@ close
 <svg id=svg1 xmlns='http://www.w3.org/2000/svg' width=200 height=200></svg>
 <canvas id=canvas1></canvas>
 <canvas id=canvas2></canvas>
-
-<h2> Interact with NewPath() just like a Path2D Object </h2>
-<canvas class=big id=canvas3></canvas>
-<canvas class=big id=canvas4></canvas>
-
-<h2> Has various Path Effects </h2>
-<canvas class=big id=canvas5></canvas>
-<canvas class=big id=canvas6></canvas>
-<canvas class=big id=canvas7></canvas>
-<canvas class=big id=canvas8></canvas>
-<canvas class=big id=canvas9></canvas>
-<canvas class=big id=canvas10></canvas>
-<canvas class=big id=canvas11></canvas>
-<canvas class=big id=canvasTransform></canvas>
-
-<h2> Supports fill-rules of nonzero and evenodd </h2>
-<svg id=svg2 xmlns='http://www.w3.org/2000/svg' width=200 height=200></svg>
-<svg id=svg3 xmlns='http://www.w3.org/2000/svg' width=200 height=200></svg>
-
-<h2> Solves Cubics for Y given X </h2>
-<canvas class=big id=cubics></canvas>
-
 <script type="text/javascript" src="./pathkit.js"></script>
-
 <script type="text/javascript" charset="utf-8">
-
 PathKitInit({
     locateFile: (file) => './' + file,
   }).then((PathKit) => {
     window.PathKit = PathKit;
     BriefExample(PathKit);
-    OutputsExample(PathKit);
-    Path2DExample(PathKit);
-    PathEffectsExample(PathKit);
-    MatrixTransformExample(PathKit);
-    FilledSVGExample(PathKit);
-    CubicSolverExample(PathKit);
   });
 
   function setCanvasSize(ctx, width, height) {
@@ -109,11 +74,12 @@ PathKitInit({
 
     function brief(source, PathKit) {
         function addref(path) { path.ref++; }
-        function release(path) { if (path.ref == 1) path.delete(); }
+        function release(path) { if (path.ref == 1) path.delete(); else path.ref--; }
         function popAny(stack) {
             if (stack.length == 0) throw "Stack underflow";
             return stack.pop();
         }
+        function peekAny(stack) { return stack[stack.length - 1]; }
         function pushAny(value, stack) { return stack.push(value); }
         function popKind(kind, stack) {
             var x = popAny(stack);
@@ -122,6 +88,8 @@ PathKitInit({
         }
         function popNum(stack) { return popKind("num", stack); }
         function popPath(stack) { return popKind("path", stack); }
+        function popQuote(stack) { return popKind("quote", stack); }
+        function popSymbol(stack) { return popKind("sym", stack); }
         function binOp(fn) {
             var x = popNum(dstack).value;
             var y = popNum(dstack).value;
@@ -161,6 +129,37 @@ PathKitInit({
             p.value = fn(p.value);
             pushAny(p, gstack);
         }
+        function applyQuote(q) {
+          return function() { q.value.forEach(w => w()); }
+        }
+        function evalWord(word) {
+          var i = parseInt(word);
+          if (isNaN(i)) {
+            if (word[0] == "'") {
+              return function() {
+                pushAny({ kind: "sym", value: word.substring(1) }, dstack);
+              }
+            } else {
+              var apply = dictionary[word];
+              if (apply) {
+                return function() {
+                  try {
+                      apply();
+                  } catch (e) {
+                      debug += " !" + e;
+                  }
+                };
+              } else {
+                  debug += " ?" + word;
+                  return function() { /* NOP */ };
+              }
+            }
+          } else {
+            return function() {
+              pushAny({ kind: "num", value: i }, dstack)
+            };
+          }
+        }
         var dstack = [];
         var gstack = [];
         var dictionary = {
@@ -180,9 +179,28 @@ PathKitInit({
             "close": function() { unaryPathChain(function (p) { return p.closePath(); })},
             "intersect": function() { pathOp(PathKit.PathOp.INTERSECT); },
             "union": function() { pathOp(PathKit.PathOp.UNION); },
-            "difference": function() { pathOp(PathKit.PathOp.DIFFERENCE); },
+            "difference": function() { pathOp(PathKit.PathOp.DIFFERENCE); }, // gswap for REVERSE_DIFFERENCE
             "xor": function() { pathOp(PathKit.PathOp.XOR); },
-            // TODO: or allow gswap PathKit.PathOp.REVERSE_DIFFERENCE
+            "[": function() {
+              pushAny({ kind: "quote", open: true, value: [] }, dstack);
+            },
+            "]": function() {
+              var q = popQuote(dstack);
+              var t = peekAny(dstack);
+              var nested = t && t.kind == "quote" && t.open; // TODO
+              if (nested) {
+                t.value.push(applyQuote(q));
+              } else {
+                q.open = false;
+                pushAny(q, dstack);
+              }
+            },
+            "apply": function() { applyQuote(popQuote(dstack)); },
+            "def": function() {
+              var name = popSymbol(dstack).value;
+              var quote = popQuote(dstack);
+              dictionary[name] = applyQuote(quote);
+            }
         };
         var debug = "";
         var lines = source.match(/[^\r\n]+/g);
@@ -194,21 +212,13 @@ PathKitInit({
                     if (words) {
                         for (var w = 0; w < words.length; w++) {
                             var word = words[w];
-                            var i = parseInt(word);
-                            if (isNaN(i)) {
-                                var apply = dictionary[word];
-                                if (apply) {
-                                    try {
-                                        apply();
-                                    } catch (e) {
-                                        debug += " !" + e;
-                                    }
-                                } else {
-                                    debug += " ?" + word;
-                                }
-                            } else {
-                                pushAny({ kind: "num", value: i }, dstack)
-                            }
+                            var immediate = word == "[" || word == "]";
+                            var expr = evalWord(word);
+                            var t = peekAny(dstack);
+                            if (!immediate && t && t.kind == "quote" && t.open)
+                              t.value.push(expr);
+                            else
+                              expr();
                         }
                     }
                 }
@@ -219,7 +229,13 @@ PathKitInit({
             var disp = ""
             for (var i in s) {
                 var x = s[i];
-                disp += x.value + ":" + x.kind + (x.kind == "path" ? "(" + JSON.stringify(x) + ") " : " ");
+                switch (x.kind) {
+                  case "path": disp += "path-" + x.ref + " "; break;
+                  case "quote": disp += "[" + x.value.length + "] "; break;
+                  case "num": disp += "#" + x.value + " "; break;
+                  case "sym": disp += "'" + x.value + " "; break;
+                  default: disp += x.value + ":" + x.kind;
+                }
             }
             return disp;
         }
@@ -239,9 +255,16 @@ PathKitInit({
             ctx.beginPath();
             var path = gstack[d].value;
             path.toCanvas(ctx);
-            path.delete();
             ctx.fill();
             ctx.stroke();
+        }
+
+        for (var d in gstack) {
+            var path = gstack[d];
+            if (path.ref > 0) {
+              path.value.delete();
+              path.ref = 0; // including clones (no double-delete)
+            }
         }
     }
 
@@ -252,6 +275,8 @@ PathKitInit({
         brief(event.target.value, PathKit);
     });
   }
+
+  // TODO: remove the below examples
 
   function OutputsExample(PathKit) {
     let firstPath = PathKit.FromSVGString('M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z');
@@ -361,7 +386,6 @@ PathKitInit({
         canvasCtx.stroke(path);
       }
     }
-
 
     objs[1].delete();
   }
