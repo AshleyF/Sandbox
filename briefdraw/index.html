@@ -90,7 +90,7 @@ close
 <script type="text/javascript" charset="utf-8">
 
 PathKitInit({
-    locateFile: (file) => '/'+file,
+    locateFile: (file) => './' + file,
   }).then((PathKit) => {
     window.PathKit = PathKit;
     BriefExample(PathKit);
