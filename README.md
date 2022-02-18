@@ -17,3 +17,7 @@ A tool to help solve Wordle puzzles.
 ## [BriefDraw](./briefdraw)
 
 A PostScript-like Brief implementation for building SVG files (to be laser cutting).
+
+## [Fallout](./fallout)
+
+A solver for the Fallout "Hacking" Terminal word game.
