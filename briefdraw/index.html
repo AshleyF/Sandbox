@@ -9,8 +9,8 @@
   }
 
   canvas {
-    width: 400px;
-    height: 400px;
+    width: 600px;
+    height: 600px;
   }
 
   #error {
@@ -22,38 +22,42 @@
   Theta: <input type="range" id="theta" min="0" max="1" step="0.001" value="0" />
   Delta: <input type="range" id="delta" min="0" max="1" step="0.001" value="0" />
 </p>
-<canvas id=canvas0 style="width:400px;height:400px"></canvas>
-<textarea id=brief cols=80 rows=26>
-[ path
-200 700 move
-500 200 line
-800 700 line
-close ] 'triangle1 def
-
-[ path
-200 300 move
-500 800 line
-800 300 line
-close ] 'triangle2 def
-
-triangle1 triangle2
-
-union
-\intersect
-\difference
-\xor
-
-path
-500 500 100 delta + 200 theta 0 3 true ellipse-rotated-partial
-500 900 line
-close
-difference
+<canvas id=canvas0></canvas>
+<textarea id=brief cols=100 rows=39>
+100 100 delta + ellipse
+theta rotate transform
 </textarea>
 <br />
 <span id=error></span>
 <span id=status></span>
 <script type="text/javascript" src="./pathkit.js"></script>
 <script type="text/javascript" charset="utf-8">
+var prelude = `
+[
+  'ry def
+  'rx def
+
+  2 sqrt 1 - 3 / 4 * 'm def
+  m rx * 'mx def
+  m ry * 'my def
+
+  rx neg '-rx def
+  ry neg '-ry def
+  mx neg '-mx def
+  my neg '-my def
+
+  path
+  0 -ry move
+   mx -ry  rx -my  rx   0 bezier
+   rx  my  mx  ry   0  ry bezier
+  -mx  ry -rx  my -rx   0 bezier
+  -rx -my -mx -ry   0 -ry bezier
+  close
+] 'ellipse def
+
+[ dup ellipse ] 'circle def
+`;
+
 PathKitInit({
     locateFile: (file) => './' + file,
   }).then((PathKit) => {
@@ -69,208 +73,346 @@ PathKitInit({
 var dstack = [];
 var gstack = [];
 
-function brief(source, PathKit) {
-  var newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + "?" + encodeURIComponent(source);
-  window.history.pushState({ path: newurl }, "", newurl);
-  function addref(path) { path.ref++; }
-  function release(path) { if (path.ref == 1) path.value.delete(); else path.ref--; }
-  function popAny(stack) {
-    if (stack.length == 0) throw "Stack underflow";
-    return stack.pop();
-  }
-  function peekAny(stack) { return stack[stack.length - 1]; }
-  function pushAny(value, stack) { return stack.push(value); }
-  function pushNum(n, stack) { pushAny({ kind: "num", value: n }, stack); }
-  function pushBool(b, stack) { pushAny({ kind: "num", value: b }, stack); }
-  function popKind(kind, stack) {
-    var x = popAny(stack);
-    if (x.kind != kind) throw "Expected " + kind + " found " + x.kind;
-    return x;
-  }
-  function popNum(stack) { return popKind("num", stack); }
-  function popPath(stack) { return popKind("path", stack); }
-  function popQuote(stack) { return popKind("quote", stack); }
-  function popSymbol(stack) { return popKind("sym", stack); }
-  function binOp(fn) {
-    var x = popNum(dstack).value;
-    var y = popNum(dstack).value;
-    pushNum(fn(x, y), dstack);
-  }
-  function pathOp(op) {
-    var pathy = popPath(gstack);
-    var pathx = popPath(gstack);
-    var p = PathKit.MakeFromOp(pathx.value, pathy.value, op);
-    gstack.push({ kind: "path", ref: 1, value: p });
-    release(pathx);
-    release(pathy);
-  }
-  function dup(stack) {
-    var x = popAny(stack); stack.push(x); stack.push(x);
-    if (x.kind == "path") { addref(x); }
-  }
-  function drop(stack) {
-    var x = popAny(stack);
-    if (x.kind == "path") { release(x); }
-  }
-  function swap(stack) {
-    var x = popAny(stack);
-    var y = popAny(stack);
-    pushAny(x, stack)
-    pushAny(y, stack)
-  }
-  function pathChain0(fn) {
-    var p = popPath(gstack);
-    p.value = fn(p.value);
-    pushAny(p, gstack);
-  }
-  function pathChain1(fn) {
-    var x = popNum(dstack).value;
-    pathChain0(function(p) { return fn(p, x); })
-  }
-  function pathChain2(fn) {
-    var y = popNum(dstack).value;
-    var x = popNum(dstack).value;
-    pathChain0(function(p) { return fn(p, x, y); })
-  }
-  function pathChain3(fn) {
-    var z = popNum(dstack).value;
-    var y = popNum(dstack).value;
-    var x = popNum(dstack).value;
-    pathChain0(function(p) { return fn(p, x, y, z); })
-  }
-  function pathChain4(fn) {
-    var w = popNum(dstack).value;
-    var z = popNum(dstack).value;
-    var y = popNum(dstack).value;
-    var x = popNum(dstack).value;
-    pathChain0(function(p) { return fn(p, x, y, z, w); })
-  }
-  function pathChain5(fn) {
-    var v = popNum(dstack).value;
-    var w = popNum(dstack).value;
-    var z = popNum(dstack).value;
-    var y = popNum(dstack).value;
-    var x = popNum(dstack).value;
-    pathChain0(function(p) { return fn(p, x, y, z, w, v); })
-  }
-  function pathChain6(fn) {
-    var u = popNum(dstack).value;
-    var v = popNum(dstack).value;
-    var w = popNum(dstack).value;
-    var z = popNum(dstack).value;
-    var y = popNum(dstack).value;
-    var x = popNum(dstack).value;
-    pathChain0(function(p) { return fn(p, x, y, z, w, v, u); })
-  }
-  function pathChain7(fn) {
-    var t = popNum(dstack).value;
-    var u = popNum(dstack).value;
-    var v = popNum(dstack).value;
-    var w = popNum(dstack).value;
-    var z = popNum(dstack).value;
-    var y = popNum(dstack).value;
-    var x = popNum(dstack).value;
-    pathChain0(function(p) { return fn(p, x, y, z, w, v, u, t); })
-  }
-  function pathChain8(fn) {
-    var s = popNum(dstack).value;
-    var t = popNum(dstack).value;
-    var u = popNum(dstack).value;
-    var v = popNum(dstack).value;
-    var w = popNum(dstack).value;
-    var z = popNum(dstack).value;
-    var y = popNum(dstack).value;
-    var x = popNum(dstack).value;
-    pathChain0(function(p) { return fn(p, x, y, z, w, v, u, t, s); })
-  }
-  function unaryPathChain(fn) {
-    var p = popPath(gstack);
-    p.value = fn(p.value);
-    pushAny(p, gstack);
-  }
-  function applyQuote(q) {
-    return function() { q.value.forEach(w => w()); }
-  }
-  function evalWord(word) {
-    var n = parseFloat(word);
-    if (isNaN(n)) {
-      if (word[0] == "'") {
-        return function() {
-          pushAny({ kind: "sym", value: word.substring(1) }, dstack);
-        }
+function release(path) { path.value.delete(); }
+function popAny(stack) {
+  if (stack.length == 0) throw "Stack underflow";
+  return stack.pop();
+}
+function peekAny(stack) { return stack[stack.length - 1]; }
+function pushAny(value, stack) { return stack.push(value); }
+function pushPath(p, stack) { stack.push({ kind: "path", value: p }); }
+function pushQuote(q, open, stack) { return stack.push({ kind: "quote", open: open, value: q }); }
+function pushWord(w, stack) { stack.push({ kind: "word", value: w }) }
+function pushNum(n, stack) { pushAny({ kind: "num", value: n }, stack); }
+function pushBool(b, stack) { pushAny({ kind: "num", value: b }, stack); }
+function pushMatrix(m, stack) {
+  m.push(0);
+  m.push(0);
+  m.push(1);
+  pushAny({ kind: "matrix", value: m }, dstack);
+}
+function popKind(kind, stack) {
+  var x = popAny(stack);
+  if (x.kind != kind) throw "Expected " + kind + " found " + x.kind;
+  return x;
+}
+function popNum(stack) { return popKind("num", stack); }
+function popPath(stack) { return popKind("path", stack); }
+function popQuote(stack) { return popKind("quote", stack); }
+function popSymbol(stack) { return popKind("sym", stack); }
+function popMatrix(stack) { return popKind("matrix", stack); }
+function unOp(fn) {
+  var x = popNum(dstack).value;
+  pushNum(fn(x), dstack);
+}
+function binOp(fn) {
+  var x = popNum(dstack).value;
+  var y = popNum(dstack).value;
+  pushNum(fn(x, y), dstack);
+}
+function pathOp(op) {
+  var pathy = popPath(gstack);
+  var pathx = popPath(gstack);
+  var p = PathKit.MakeFromOp(pathx.value, pathy.value, op);
+  pushPath(p, gstack);
+  release(pathx);
+  release(pathy);
+}
+function dup(stack) {
+  var x = popAny(stack); stack.push(x); stack.push(x);
+}
+function drop(stack) {
+  var x = popAny(stack);
+  if (x.kind == "path") { release(x); }
+}
+function swap(stack) {
+  var x = popAny(stack);
+  var y = popAny(stack);
+  pushAny(x, stack)
+  pushAny(y, stack)
+}
+function over(stack) {
+  var x = popAny(stack);
+  var y = popAny(stack);
+  pushAny(y, stack)
+  pushAny(x, stack)
+  pushAny(y, stack)
+}
+function pathChain0(fn) {
+  var p = popPath(gstack);
+  p.value = fn(p.value) || PathKit.NewPath();
+  pushAny(p, gstack);
+}
+function pathChain1(fn) {
+  var x = popNum(dstack).value;
+  pathChain0(function(p) { return fn(p, x); })
+}
+function pathChain2(fn) {
+  var y = popNum(dstack).value;
+  var x = popNum(dstack).value;
+  pathChain0(function(p) { return fn(p, x, y); })
+}
+function pathChain3(fn) {
+  var z = popNum(dstack).value;
+  var y = popNum(dstack).value;
+  var x = popNum(dstack).value;
+  pathChain0(function(p) { return fn(p, x, y, z); })
+}
+function pathChain4(fn) {
+  var w = popNum(dstack).value;
+  var z = popNum(dstack).value;
+  var y = popNum(dstack).value;
+  var x = popNum(dstack).value;
+  pathChain0(function(p) { return fn(p, x, y, z, w); })
+}
+function pathChain5(fn) {
+  var v = popNum(dstack).value;
+  var w = popNum(dstack).value;
+  var z = popNum(dstack).value;
+  var y = popNum(dstack).value;
+  var x = popNum(dstack).value;
+  pathChain0(function(p) { return fn(p, x, y, z, w, v); })
+}
+function pathChain6(fn) {
+  var u = popNum(dstack).value;
+  var v = popNum(dstack).value;
+  var w = popNum(dstack).value;
+  var z = popNum(dstack).value;
+  var y = popNum(dstack).value;
+  var x = popNum(dstack).value;
+  pathChain0(function(p) { return fn(p, x, y, z, w, v, u); })
+}
+function pathChain7(fn) {
+  var t = popNum(dstack).value;
+  var u = popNum(dstack).value;
+  var v = popNum(dstack).value;
+  var w = popNum(dstack).value;
+  var z = popNum(dstack).value;
+  var y = popNum(dstack).value;
+  var x = popNum(dstack).value;
+  pathChain0(function(p) { return fn(p, x, y, z, w, v, u, t); })
+}
+function pathChain8(fn) {
+  var s = popNum(dstack).value;
+  var t = popNum(dstack).value;
+  var u = popNum(dstack).value;
+  var v = popNum(dstack).value;
+  var w = popNum(dstack).value;
+  var z = popNum(dstack).value;
+  var y = popNum(dstack).value;
+  var x = popNum(dstack).value;
+  pathChain0(function(p) { return fn(p, x, y, z, w, v, u, t, s); })
+}
+function matrixMultiply(m0, m1) {
+    var a = m0[0];
+    var b = m0[1];
+    var c = m0[2];
+    var d = m0[3];
+    var e = m0[4];
+    var f = m0[5];
+    var z = m1[0];
+    var y = m1[1];
+    var x = m1[2];
+    var w = m1[3];
+    var v = m1[4];
+    var u = m1[5];
+    return [
+      a * z + b * w,
+      a * y + b * v,
+      a * x + b * u + c,
+      d * z + e * w,
+      d * y + e * v,
+      d * x + e * u + f];
+}
+function unaryPathChain(fn) {
+  var p = popPath(gstack);
+  p.value = fn(p.value);
+  pushAny(p, gstack);
+}
+function applyQuote(q) {
+  return function() {
+    q.value.forEach(w => {
+      if (typeof(w) == "function") {
+        w();
       } else {
-        var apply = dictionary[word];
-        if (apply) {
-          return function() {
-            try {
-                apply();
-            } catch (e) {
-                error += " !" + e;
-            }
-          };
-        } else {
-            error += " ?" + word;
-            return function() { /* NOP */ };
-        }
+        evalWord(w.value)();
+      }
+    });
+  }
+}
+function evalWord(word) {
+  var n = parseFloat(word);
+  if (isNaN(n)) {
+    if (word[0] == "'") {
+      return function() {
+        pushAny({ kind: "sym", value: word.substring(1) }, dstack);
       }
     } else {
-      return function() {
-        pushNum(n, dstack)
-      };
+      var q = dictionary[word];
+      if (q) {
+        q = typeof(q) == "function" ? q : applyQuote(q);
+        return function() {
+          try {
+            q();
+          } catch (e) {
+            error += " !" + e;
+          }
+        };
+      } else {
+        error += " ?" + word;
+        return function() { /* NOP */ };
+      }
+    }
+  } else {
+    return function() {
+      pushNum(n, dstack)
+    };
+  }
+}
+var error = "";
+var dictionary = {
+  "pi": function() { pushNum(Math.PI, dstack); },
+  "2pi": function() { pushNum(2 * Math.PI, dstack); },
+  "e": function() { pushNum(Math.E, dstack); },
+  "theta": function() { pushNum(document.getElementById("theta").value * 2 * Math.PI, dstack); },
+  "delta": function() { pushNum(document.getElementById("delta").value * 1000, dstack); },
+  "true": function() { pushBool(true, dstack); },
+  "false": function() { pushBool(false, dstack); },
+  "+": function() { binOp(function(x, y) { return y + x; }); },
+  "-": function() { binOp(function(x, y) { return y - x; }); },
+  "*": function() { binOp(function(x, y) { return y * x; }); },
+  "/": function() { binOp(function(x, y) { return y / x; }); },
+  "min": function() { binOp(function(x, y) { return Math.max(x, y); })},
+  "max": function() { binOp(function(x, y) { return Math.max(x, y); })},
+  "neg": function() { unOp(function(x) { return -x; })},
+  "sin": function() { unOp(function(x) { return Math.sin(x); })},
+  "cos": function() { unOp(function(x) { return Math.cos(x); })},
+  "tan": function() { unOp(function(x) { return Math.tan(x); })},
+  "sqrt": function() { unOp(function(x) { return Math.sqrt(x); })},
+  "dup": function() { dup(dstack); },
+  "gdup": function() {
+    var p = popPath(gstack);
+    pushAny(p, gstack);
+    pushPath(PathKit.NewPath(p.value), gstack);
+  },
+  "drop": function() { drop(dstack); },
+  "gdrop": function() { drop(gstack); },
+  "swap": function() { swap(dstack); },
+  "gswap": function() { swap(gstack); },
+  "over": function() { over(dstack); },
+  "gover": function() { over(gstack); },
+  "path": function() { pushPath(PathKit.NewPath(), gstack); },
+  "move": function() { pathChain2(function(p, x, y) { return p.moveTo(x, y); })},
+  "line": function() { pathChain2(function(p, x, y) { return p.lineTo(x, y); })},
+  //"ellipse-rotated-partial": function() { pathChain8(function(p, x, y, rx, ry, rot, start, end, ccw) { return p.ellipse(x, y, rx, ry, rot, start, end, ccw); }); }, // x, y, radiusX, radiusY, rotation, startAngle, endAngle, ccw
+  //"ellipse-rotated": function() { pathChain5(function(p, x, y, rx, ry, rot) { return p.ellipse(x, y, rx, ry, rot, 0, 2 * Math.PI); }); },
+  //"ellipse": function() { pathChain4(function(p, x, y, rx, ry) { return p.ellipse(x, y, rx, ry, 0, 0, 2 * Math.PI); }); },
+  "circle": function() { pathChain3(function(p, x, y, r) { return p.ellipse(x, y, r, r, 0, 0, 2 * Math.PI); }); },
+  "rect": function() { pathChain4(function(p, x, y, w, h) { return p.rect(x, y, w, h); } )},
+  "square": function() { pathChain3(function(p, x, y, s) { return p.rect(x, y, s, s); } )},
+  "trim": function() { pathChain3(function(p, s, e, c) { return p.trim(s, e, c); } )},
+  "simplify": function() { pathChain0(function(p) { return p.simplify(); }) },
+  "bezier": function() { pathChain6(function(p, cx0, cy0, cx1, cy1, x, y) { return p.bezierCurveTo(cx0, cy0, cx1, cy1, x, y); })},
+  "conic": function() { pathChain5(function(p, x0, y0, x1, y1, z) { return p.conicTo(x0, y0, x1, y1, z); })},
+  "close": function() { unaryPathChain(function(p) { return p.closePath(); })},
+  "intersect": function() { pathOp(PathKit.PathOp.INTERSECT); },
+  "union": function() { pathOp(PathKit.PathOp.UNION); },
+  "difference": function() { pathOp(PathKit.PathOp.DIFFERENCE); }, // gswap for REVERSE_DIFFERENCE
+  "xor": function() { pathOp(PathKit.PathOp.XOR); },
+  "matrix": function() {
+    var u = popNum(dstack).value;
+    var v = popNum(dstack).value;
+    var w = popNum(dstack).value;
+    var z = popNum(dstack).value;
+    var y = popNum(dstack).value;
+    var x = popNum(dstack).value;
+    pushMatrix([x, y, z, w, v, u], dstack);
+  },
+  "rotate": function() {
+    var t = popNum(dstack).value;
+    var s = Math.sin(t);
+    var c = Math.cos(t);
+    pushMatrix([c, -s, 0, s, c, 0], dstack)
+  },
+  "scale": function() {
+    var w = popNum(dstack).value;
+    var h = popNum(dstack).value;
+    pushMatrix([w, 0, 0, 0, h, 0], dstack)
+  },
+  "shear": function() {
+    var y = popNum(dstack).value;
+    var x = popNum(dstack).value;
+    pushMatrix([1, Math.tan(x), 0, Math.tan(y), 1, 0], dstack)
+  },
+  "translate": function() {
+    var y = popNum(dstack).value;
+    var x = popNum(dstack).value;
+    pushMatrix([1, 0, x, 0, 1, y], dstack)
+  },
+  "flipx": function() { pushMatrix([1, 0, 0, 0, -1, 0], dstack); },
+  "flipy": function() { pushMatrix([-1, 0, 0, 0, 1, 0], dstack); },
+  "compose": function() {
+    var m0 = popMatrix(dstack).value;
+    var m1 = popMatrix(dstack).value;
+    var m = matrixMultiply(m0, m1);
+    pushMatrix(m, dstack);
+  },
+  "transform": function() {
+    var m = popMatrix(dstack).value;
+    pathChain0(function(p) { return p.transform(m); })
+  },
+  "[": function() {
+    pushQuote([], true, dstack);
+  },
+  "]": function() {
+    var q = popQuote(dstack);
+    var t = peekAny(dstack);
+    var nested = t && t.kind == "quote" && t.open; // TODO
+    if (nested) {
+      t.value.push(q.value);
+    } else {
+      q.open = false;
+      pushAny(q, dstack);
+    }
+  },
+  "apply": function() { applyQuote(popQuote(dstack))(); },
+  "def": function() {
+    var name = popSymbol(dstack).value;
+    var v = popAny(dstack);
+    if (v.kind == "quote")
+      dictionary[name] = v;
+    else
+      dictionary[name] = function() { pushAny(v, dstack); }
+  },
+  "repeat": function() {
+    var x = popNum(dstack).value;
+    var q = popQuote(dstack);
+    if (x > 100) {
+      error += "Infinite loop? (" + x + " repeat)";
+      return;
+    }
+    var a = applyQuote(q);
+    while (x-- > 0) a();
+  },
+  "range": function() {
+    var x = popNum(dstack).value;
+    var y = popNum(dstack).value;
+    var z = popNum(dstack).value;
+    var range = [];
+    for (var i = z; i <= y; i += x) pushNum(i, range);
+    pushQuote(range, false, dstack);
+  },
+  "iter": function() {
+    var f = applyQuote(popQuote(dstack));
+    var q = popQuote(dstack).value;
+    for (var i in q) {
+      pushAny(q[i], dstack);
+      f();
     }
   }
-  var dictionary = {
-    "pi": function() { pushNum(Math.PI, dstack); },
-    "2pi": function() { pushNum(2 * Math.PI, dstack); },
-    "e": function() { pushNum(Math.E, dstack); },
-    "theta": function() { pushNum(document.getElementById("theta").value * 2 * Math.PI, dstack); },
-    "delta": function() { pushNum(document.getElementById("delta").value * 1000, dstack); },
-    "true": function() { pushBool(true, dstack); },
-    "false": function() { pushBool(false, dstack); },
-    "+": function() { binOp(function (x, y) { return y + x; }); },
-    "-": function() { binOp(function (x, y) { return y - x; }); },
-    "*": function() { binOp(function (x, y) { return y * x; }); },
-    "/": function() { binOp(function (x, y) { return y / x; }); },
-    "dup": function() { dup(dstack); },
-    "gdup": function() { dup(gstack); },
-    "drop": function() { drop(dstack); },
-    "gdrop": function() { drop(gstack); },
-    "swap": function() { swap(dstack); },
-    "gswap": function() { swap(gstack); },
-    "path": function() { gstack.push({ kind: "path", ref: 1, value: PathKit.NewPath() }); },
-    "move": function() { pathChain2(function(p, x, y) { return p.moveTo(x, y); })},
-    "line": function() { pathChain2(function(p, x, y) { return p.lineTo(x, y); })},
-    "ellipse-rotated-partial": function() { pathChain8(function(p, x, y, rx, ry, rot, start, end, ccw) { return p.ellipse(x, y, rx, ry, rot, start, end, ccw); }); }, // x, y, radiusX, radiusY, rotation, startAngle, endAngle, ccw
-    "ellipse-rotated": function() { pathChain5(function(p, x, y, rx, ry, rot) { return p.ellipse(x, y, rx, ry, rot, 0, 0); }); },
-    "ellipse": function() { pathChain4(function(p, x, y, rx, ry) { return p.ellipse(x, y, rx, ry, 0, 0, 0); }); },
-    "simplify": function() { pathChain0(function(p) { return p.simplify(); }) },
-    "close": function() { unaryPathChain(function (p) { return p.closePath(); })},
-    "intersect": function() { pathOp(PathKit.PathOp.INTERSECT); },
-    "union": function() { pathOp(PathKit.PathOp.UNION); },
-    "difference": function() { pathOp(PathKit.PathOp.DIFFERENCE); }, // gswap for REVERSE_DIFFERENCE
-    "xor": function() { pathOp(PathKit.PathOp.XOR); },
-    "[": function() {
-      pushAny({ kind: "quote", open: true, value: [] }, dstack);
-    },
-    "]": function() {
-      var q = popQuote(dstack);
-      var t = peekAny(dstack);
-      var nested = t && t.kind == "quote" && t.open; // TODO
-      if (nested) {
-        t.value.push(applyQuote(q));
-      } else {
-        q.open = false;
-        pushAny(q, dstack);
-      }
-    },
-    "apply": function() { applyQuote(popQuote(dstack)); },
-    "def": function() {
-      var name = popSymbol(dstack).value;
-      var quote = popQuote(dstack);
-      dictionary[name] = applyQuote(quote);
-    }
-  };
-  var error = "";
+};
+
+function brief(source, PathKit) {
   var lines = source.match(/[^\r\n]+/g);
   if (lines) {
     for (var l in lines) {
@@ -281,12 +423,11 @@ function brief(source, PathKit) {
           for (var w = 0; w < words.length; w++) {
             var word = words[w];
             var immediate = word == "[" || word == "]";
-            var expr = evalWord(word);
             var t = peekAny(dstack);
             if (!immediate && t && t.kind == "quote" && t.open)
-              t.value.push(expr);
+              pushWord(word, t.value);
             else
-              expr();
+              evalWord(word)();
           }
         }
       }
@@ -301,11 +442,12 @@ function showStacks() {
     for (var i in s) {
         var x = s[i];
         switch (x.kind) {
-          case "path": disp += "path-" + x.ref + " "; break;
+          case "path": disp += "path "; break;
           case "quote": disp += "[" + x.value.length + "] "; break;
           case "num": disp += "#" + x.value + " "; break;
           case "sym": disp += "'" + x.value + " "; break;
           case "bool": disp += "B" + x.value + " "; break;
+          case "matrix": disp += "M[" + x.value[0] + " " + x.value[1] + " " + x.value[2] + " " + x.value[3] + " " + x.value[4] + " " + x.value[5] + "] "; break;
           default: disp += x.value + ":" + x.kind;
         }
     }
@@ -328,6 +470,7 @@ function drawToCanvas(name) {
   for (var d in gstack) {
     ctx.beginPath();
     var path = gstack[d].value;
+    path.transform([1, 0, 500, 0, 1, 500, 0, 0, 1]);
     path.toCanvas(ctx);
     ctx.fill();
     ctx.stroke();
@@ -335,10 +478,7 @@ function drawToCanvas(name) {
 
   for (var d in gstack) {
     var path = gstack[d];
-    if (path.ref > 0) {
-      path.value.delete();
-      path.ref = 0; // including clones (no double-delete)
-    }
+    path.value.delete();
   }
 }
 
@@ -346,6 +486,7 @@ function update() {
   var source = document.getElementById("brief");
   dstack = [];
   gstack = [];
+  error = "";
   brief(source.value, PathKit);
   showStacks();
   drawToCanvas("canvas0");
@@ -354,13 +495,23 @@ function update() {
 function BriefExample(PathKit) {
   var query = window.location.search.substr(1);
   if (query.length > 0) document.getElementById("brief").value = decodeURIComponent(query);
+  brief(prelude, PathKit);
   update();
-  document.getElementById("brief").addEventListener('input', (event) => update()); 
+  document.getElementById("brief").addEventListener('input', (event) => {
+    var source = document.getElementById("brief").value;
+    var newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + "?" + encodeURIComponent(source);
+    window.history.pushState({ path: newurl }, "", newurl);
+    update(); 
+  });
   document.getElementById("theta").addEventListener('input', (event) => update()); 
   document.getElementById("delta").addEventListener('input', (event) => update()); 
 }
 
+// --------------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------------------------------
 // TODO: remove the below examples
+// ----------------------------------------------------------------------------------------------------
 
 function OutputsExample(PathKit) {
   let simpleStr = firstPath.toSVGString();
@@ -629,3 +780,152 @@ function CubicSolverExample(PathKit) {
   ctx.stroke();
 }
 </script>
+<!--
+[ theta 30 * + ] 't def
+
+500 'width def
+300 'height def
+100 'depth def
+
+10 'thickness def
+25 'teeth def
+
+30 'gap def
+
+width 2 / 'half-width def
+height 2 / 'half-height def
+
+half-width neg 'bottom-w def
+half-height neg 'bottom-n def
+half-width 'bottom-e def
+half-height 'bottom-s def
+
+bottom-w 'side0-w def
+bottom-e 'side0-e def
+bottom-n gap - depth - 'side0-n def
+side0-n depth + 'side0-s def
+
+bottom-s gap + 'side1-n def
+bottom-w 'side1-w def
+side1-n depth + 'side1-s def
+side1-w width + 'side1-e def
+
+bottom-n 'side2-n def
+bottom-s 'side2-s def
+bottom-w gap - depth - 'side2-w def
+side2-w depth + 'side2-e def
+
+bottom-n 'side3-n def
+bottom-s 'side3-s def
+bottom-e gap + 'side3-w def
+side2-w depth + 'side3-e def
+
+[ teeth / ] 'teeth-per def
+width teeth-per 'teeth-along-width def
+height teeth-per 'teeth-along-height def
+
+path bottom-w bottom-n width height rect
+path side0-w side0-n width depth rect
+path side1-w side1-n width depth rect
+path side2-w side2-n depth height rect
+path side3-w side3-n depth height rect
+union union union union
+
+bottom-w [
+  dup path swap bottom-n teeth thickness rect difference
+  dup path swap side1-n teeth thickness rect difference
+  teeth +
+  dup path swap side0-s thickness - teeth thickness rect difference
+  dup path swap bottom-s thickness - teeth thickness rect difference
+  teeth +
+] teeth-along-width 2 / repeat
+
+500 500 translate transform
+-->
+<!--
+[ theta 30 * + ] 't def
+
+500 'width def
+300 'height def
+100 'depth def
+
+10 'thickness def
+25 t 'teeth def
+
+30 'gap def
+
+[ 2 / ] 'split def
+width split 'right def
+height split 'bottom def
+right neg 'left def
+bottom neg 'top def
+
+\ base
+path left top width height rect
+
+\ teeth
+teeth 2 * 'step def
+left teeth + 'left-skip def
+right teeth - 'right-skip def
+top teeth + 'top-skip def
+bottom teeth - 'bottom-skip def
+bottom thickness - 'bottom-teeth def
+right thickness - 'right-teeth def
+
+left right step range [ path top teeth thickness rect difference ] iter
+left-skip right-skip step range [ path bottom-teeth teeth thickness rect difference ] iter
+top bottom step range [ path left swap thickness teeth rect difference ] iter
+top-skip bottom-skip step range [ path right-teeth swap thickness teeth rect difference ] iter
+\500 500 translate transform
+
+\ left side (subtract base)
+gdup path left depth - thickness + top depth height rect gswap difference
+gap neg 0 translate transform
+
+gdup flipy flipx compose transform
+
+-->
+
+<!--
+
+\ JWST
+
+100 theta 100 * + 'r def
+
+path 0 r move 0 pi 2 * dup 6 / range [ dup sin r * swap cos r * line ] iter
+
+pi 6 / 't def
+
+pi 6 / 2 pi * pi 3 / range [ gdup dup sin r 2 * * swap cos r 2 * * translate transform gswap ] iter
+pi 6 / 2 pi * pi 3 / range [ gdup dup sin r 4 * * swap cos r 4 * * translate transform gswap ] iter
+pi 6 / dup + 2 pi * pi 3 / range [ gdup dup sin r 3.5 * * swap cos r 3.5 * * translate transform gswap ] iter
+
+gdup difference
+
+delta 100 / rotate transform
+-->
+<!--
+\ bezier circle
+200 'size def
+size size theta * + 'rx def
+size 'ry def
+
+2 sqrt 1 - 3 / 4 * 'm def
+m rx * 'mx def
+m ry * 'my def
+
+rx neg '-rx def
+ry neg '-ry def
+mx neg '-mx def
+my neg '-my def
+
+path
+0 -ry move
+ mx -ry  rx -my  rx   0 bezier
+ rx  my  mx  ry   0  ry bezier
+-mx  ry -rx  my -rx   0 bezier
+-rx -my -mx -ry   0 -ry bezier
+close
+
+delta 100 / rotate transform
+-->
