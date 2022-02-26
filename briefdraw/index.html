@@ -21,8 +21,10 @@
 <p>
   Theta: <input type="range" id="theta" min="0" max="1" step="0.001" value="0" />
   Delta: <input type="range" id="delta" min="0" max="1" step="0.001" value="0" />
+  <a id="save" download="briefdraw.svg">Save SVG</a>
 </p>
-<canvas id=canvas0></canvas>
+<canvas style="display: none" id=canvas0></canvas>
+<svg id="svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="600" height="600"></svg>
 <textarea id=brief cols=100 rows=39>100 150 delta + ellipse theta rotate</textarea>
 <br />
 <span id=error></span>
@@ -31,6 +33,8 @@
 <script type="text/javascript" charset="utf-8">
 var prelude = `
 2 pi * '2pi let
+[ over over ] '2dup let
+[ [ range ] dip iter ] 'for let
 [
   'ry let
   'rx let
@@ -68,13 +72,13 @@ var prelude = `
   0 2pi 2pi s / range [ dup cos r * swap sin r * line ] iter
   close
   pi 2 / pi s / + rotate
-] 'polygon let
-[ 3 polygon ] 'triangle let
-[ 4 polygon ] 'square let
-[ 5 polygon ] 'pentagon let
-[ 6 polygon ] 'hexagon let
-[ 7 polygon ] 'heptagon let
-[ 8 polygon ] 'octagon let
+] 'ngon let
+[ 3 ngon ] 'triangle let
+[ 4 ngon ] 'square let
+[ 5 ngon ] 'pentagon let
+[ 6 ngon ] 'hexagon let
+[ 7 ngon ] 'heptagon let
+[ 8 ngon ] 'octagon let
 
 [ 1 0 0 0 1 0 matrix ] 'identity-matrix let
 [ rotation-matrix transform ] 'rotate let
@@ -316,6 +320,12 @@ var dictionary = {
   "tan": function() { unOp(function(x) { return Math.tan(x); })},
   "sqrt": function() { unOp(function(x) { return Math.sqrt(x); })},
   "dup": function() { dup(dstack); },
+  "dip": function() {
+    var q = popQuote(dstack);
+    var x = popAny(dstack);
+    applyQuote(q)();
+    pushAny(x, dstack);
+  },
   "gdup": function() {
     var p = popPath(gstack);
     pushAny(p, gstack);
@@ -342,6 +352,7 @@ var dictionary = {
   "bezier": function() { pathChain6(function(p, cx0, cy0, cx1, cy1, x, y) { return p.bezierCurveTo(cx0, cy0, cx1, cy1, x, y); })},
   //"conic": function() { pathChain5(function(p, x0, y0, x1, y1, z) { return p.conicTo(x0, y0, x1, y1, z); })},
   "close": function() { unaryPathChain(function(p) { return p.closePath(); })},
+  "stroke": function() { pathChain1(function(p, x) { return p.stroke({width: x}); }); },
   "intersect": function() { pathOp(PathKit.PathOp.INTERSECT); },
   "union": function() { pathOp(PathKit.PathOp.UNION); },
   "difference": function() { pathOp(PathKit.PathOp.DIFFERENCE); }, // gswap for REVERSE_DIFFERENCE
@@ -411,10 +422,12 @@ var dictionary = {
   "let": function() {
     var name = popSymbol(dstack).value;
     var v = popAny(dstack);
-    if (v.kind == "quote")
+    if (v.kind == "quote") {
+      delete dictionary[name];
       dictionary[name] = v;
-    else
+    } else {
       dictionary[name] = function() { pushAny(v, dstack); }
+    }
   },
   "repeat": function() {
     var x = popNum(dstack).value;
@@ -499,6 +512,7 @@ function drawToCanvas(name) {
   ctx.fillStyle = 'gainsboro';
   ctx.scale(1, 1);
 
+  var svg = "";
   for (var d in gstack) {
     ctx.beginPath();
     var path = gstack[d].value;
@@ -506,7 +520,13 @@ function drawToCanvas(name) {
     path.toCanvas(ctx);
     ctx.fill();
     ctx.stroke();
+    svg += '<path stroke="black" stroke-width="1" fill="gainsboro" d="' + path.toSVGString() + '"/>\n';
   }
+
+  var svgElement = document.getElementById("svg");
+  var saveElement = document.getElementById("save")
+  svgElement.innerHTML = svg;
+  saveElement.href = 'data:image/svg+xml; charset=utf8, ' + encodeURIComponent(svgElement.outerHTML);
 
   for (var d in gstack) {
     var path = gstack[d];
@@ -961,4 +981,30 @@ path
 close
 
 delta 100 / rotate transform
+-->
+<!--
+\ JWST
+[
+  'gap let
+  'radius let
+  3 sqrt 2 / radius * gap + 'h let
+  0 2pi 2pi 6 / [
+    dup pi 2 / + cos 2 * h *
+    swap pi 2 / + sin 2 * h *
+    2dup radius hexagon translate
+    2 * swap 2 * swap radius hexagon translate
+  ] for
+  0 2pi 2pi 6 / [
+    dup pi 3 / + cos 3 * radius gap + *
+    swap pi 3 / + sin 3 * radius gap + *
+    radius hexagon translate
+  ] for
+] 'jwst-mirrors let
+
+100 8 jwst-mirrors
+0 20 1 [ drop combine ] for
+
+gdup gdup 60 stroke
+union 200 hexagon union
+gswap
 -->
