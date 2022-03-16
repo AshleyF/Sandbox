@@ -55,6 +55,24 @@ var prelude = `
 ] 'ellipse let
 [ dup ellipse ] 'circle let
 [
+  'r let
+  2 / 'h let
+  2 / 'w let
+  2 sqrt 1 - 3 / 4 * 'm let
+  m r * 'mr let
+  path
+  w neg r +  h neg  move
+  w r -  h neg  line
+  w r - mr +  h neg  w  h neg mr +  w  h neg r + bezier
+  w  h r - line
+  w  h r - mr +  w mr -  h  w r -  h bezier
+  w neg r +  h line
+  w neg r + mr -  h  w neg  h mr -  w neg  h r - bezier
+  w neg  h neg r + line
+  w neg  h neg r + mr -  w neg mr +  h neg  w neg r +  h neg bezier
+  close
+] 'rounded-rect let
+[
   2 / 'h let
   2 / 'w let
   path
