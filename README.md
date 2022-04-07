@@ -21,3 +21,7 @@ A PostScript-like Brief implementation for building SVG files (to be laser cutti
 ## [Fallout](./fallout)
 
 A solver for the Fallout "Hacking" Terminal word game.
+
+## [KeyCast](./keycast)
+
+A simple app to display pressed keys in a floating window (for screen casts).
