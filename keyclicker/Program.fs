@@ -1,7 +1,8 @@
 ﻿open System
 open System.Diagnostics
+open System.IO
 open System.Runtime.InteropServices
-open System.Media;
+open System.Windows.Media
 open System.Windows.Forms
 
 [<Literal>]
@@ -48,11 +49,14 @@ type App(handler) as x =
         UnhookWindowsHookEx(hook) |> ignore
         base.ExitThreadCore()
 
-let sound = new SoundPlayer("Click.wav")
+let player = new MediaPlayer();
+player.Open(new System.Uri(Path.Combine(Environment.CurrentDirectory, "Click.wav")));
 
 Console.WriteLine("Leave this running in the background, playing keyboard clicks as you type in any forground app.")
 
 Application.Run(new App(fun code wparam lparam ->
     let keydown = lparam.flags &&& 0b10000000u = 0u
-    if keydown then sound.Play()
+    if keydown then
+        player.Play()
+        player.Position <- TimeSpan.Zero
     None))
