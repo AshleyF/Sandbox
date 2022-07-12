@@ -26,6 +26,10 @@ A solver for the Fallout "Hacking" Terminal word game.
 
 A simple app to display pressed keys in a floating window (for screen casts).
 
+## [KeyClicker](./keyclicker)
+
+Similar to KeyCast (above), but simply playing a click.wav.
+
 ## [WebSockets](./websockets)
 
 Experimenting with WebSockets using bare-metal socket APIs in F# to create an HTTP web server that upgrades requests and demos with chat.
