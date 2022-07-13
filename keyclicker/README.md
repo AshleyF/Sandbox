@@ -2,7 +2,6 @@
 
 A simple app (in both [.NET F#](Program.fs) and [Python](KeyClicker.py)) to play keyboard sound effects as keys are pressed. Hooks events system-wide (leave running in the background while typing in any foreground app).
 
-- TODO: No sound opon key auto-repeat
 - TODO: Distinction between key down/up sounds
 
 ## Sound Files
