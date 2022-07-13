@@ -1,8 +1,6 @@
-import os
-
+import os, keyboard, string
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
-
-import keyboard, pygame, string
+import pygame
 
 pygame.init()
 pygame.mixer.init()
