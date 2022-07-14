@@ -46,8 +46,6 @@ type App(handler) as x =
         UnhookWindowsHookEx(hook) |> ignore
         base.ExitThreadCore()
 
-// Download sound files from Glarses: https://drive.google.com/drive/folders/1ND88io8f4qIt5Ku2TJ21_LQqB6ju8r2P
-// See also: https://www.youtube.com/watch?v=P_9vXJZVT54
 let keySoundMappings = [
     (65, "A"); (66, "B"); (67, "C"); (68, "D"); (69, "E"); (70, "F"); (71, "G")
     (72, "H"); (73, "I"); (74, "J"); (75, "K"); (76, "L"); (77, "M"); (78, "N")
@@ -61,7 +59,7 @@ let keySoundMappings = [
 
 let makePlayer sound =
     let player = new MediaPlayer();
-    player.Open(new System.Uri(Path.Combine(Environment.CurrentDirectory, $"../../../NK Cream Sounds/{sound}.mp3")));
+    player.Open(new System.Uri(Path.Combine(Environment.CurrentDirectory, $"../../../sounds/{sound}.mp3")));
     player.MediaFailed.Add(fun (_) -> printfn $"MEDIA FAILURE: {sound}")
     player
 
