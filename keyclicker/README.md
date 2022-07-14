@@ -7,4 +7,4 @@ A simple app (in both [.NET F#](Program.fs) and [Python](KeyClicker.py)) to play
 ## Sound Files
 
 Sound files were recorded by Glarses (included here with his permission).
-Check out his video: https://www.youtube.com/watch?v=P_9vXJZVT54
+Check out his video: https://youtu.be/P_9vXJZVT54
