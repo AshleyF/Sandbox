@@ -33,3 +33,7 @@ Similar to KeyCast (above), but simply playing a click.wav.
 ## [WebSockets](./websockets)
 
 Experimenting with WebSockets using bare-metal socket APIs in F# to create an HTTP web server that upgrades requests and demos with chat.
+
+## [Morse](./morse)
+
+A tool to generate all words containing a subset of characters (for Morse code practice).
