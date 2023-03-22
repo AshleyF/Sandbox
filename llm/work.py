@@ -1,6 +1,6 @@
 import openai
 
-openai.api_key = "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"
+openai.api_key = '<insert key>'
 
 currentState = {
     'Remote1': ['Rick Gutierrez', 'Andy Wilson', 'Richard Hughes'],
@@ -49,14 +49,14 @@ def query(prompt):
 def automation(prompt):
     context = f'''
         We are in a conference room having a meeting, but many of the attendees are remote.
-        The remote people show up on screens around the table; up to four per screen maximum.
-        We call this "seating" an attendee at a screen. There is very large screen in in the
-        front, which is not used for seating. Instead it is exclusively for presentations.
-        A tall screen to the left of the big screen is mainly used for presenters to be "seated"
-        while presenting on the big screen, but this screen may also be used to seat regular
-        attendees if there isn't room elsewhere. Three other screens are at the back of the room,
-        opposite to the big and the tall screens. Each are the same size and are meant as "seats"
-        for remote attendees.
+        The remote people show up on screens around the table. Multiple people may be on one
+        screen; up to four per screen maximum. We call this "seating" an attendee at a screen.
+        There is very large screen in in the front, which is not used for seating. Instead it
+        is exclusively for presentations. A tall screen to the left of the big screen is mainly
+        used for presenters to be "seated" while presenting on the big screen, but this screen
+        may also be used to seat regular attendees if there isn't room elsewhere. Three other
+        screens are at the back of the room, opposite to the big and the tall screens. Each are
+        the same size and are meant as "seats" for remote attendees.
 
         We call the tall screen at the front, to the left of the big screen, the "presenter screen"
         and it's identifier is "Remote4". The three screens in the back are referred to as
@@ -134,8 +134,11 @@ def automation(prompt):
 print('-- BEFORE ------------------------------------------------------------')
 print(describeState(currentState))
 
-automation('Put Rick on the presenter screen')
-automation('Rick is done presenting. Please reseat him.')
+#automation('Put Rick on the presenter screen')
+#automation('Rick is done presenting. Please reseat him.')
 #automation('Put Ashley on the back left screen')
 #automation('Rebalance the number of attendees on each screen')
 #automation('Put people in the room in the fake seat')
+#automation('Opps, Quanquin needs to move to the fake seat and Panda is going to present now.')
+#automation('The meeting is over. Please unseat everyone.')
+automation('Put John on the middle screen and Ashley on the back right one')

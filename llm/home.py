@@ -5,7 +5,7 @@ import speech_recognition as sr
 import pyttsx3
 from kasa import SmartBulb
 
-openai.api_key = "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"
+openai.api_key = '<insert key>'
 
 speech = pyttsx3.init()
 

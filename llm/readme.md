@@ -5,6 +5,8 @@ https://stackoverflow.com/questions/68251169/unable-to-install-pyaudio-on-m1-mac
 
 pip install pyttsx3
 
+## Example 1
+
 -- BEFORE ------------------------------------------------------------
 
         Curently seated at each screen are:
@@ -63,5 +65,116 @@ seat('Rick Gutierrez', 'Remote3') # move Rick Gutierrez from Remote4 to Remote3
         Remote1: Andy Wilson, Richard Hughes
         Remote2: Sean Rintel, Ashley Feniello
         Remote3: John Tang, Rick Gutierrez
+        Remote4: 
+        Fake: Sasa Junuzovic, Quanquin Qi, Kori Inkpen
+
+## Example 2
+
+-- BEFORE ------------------------------------------------------------
+
+        Curently seated at each screen are:
+        Remote1: Rick Gutierrez, Andy Wilson, Richard Hughes
+        Remote2: Sean Rintel, Ashley Feniello
+        Remote3: John Tang
+        Remote4: 
+        Fake: Sasa Junuzovic, Quanquin Qi, Kori Inkpen
+    
+-- PROMPT ----------------------------------------------------------
+Opps, Quanquin needs to move to the fake seat and Panda is going to present now.
+
+-- RESPONSE ----------------------------------------------------------
+
+
+Okay, here is what I have done:
+
+1. Call the `unseat()` function to remove Sasa Junuzovic, Quanquin Qi, and Kori Inkpen from the fake seat:
+```
+unseat('Sasa Junuzovic')
+unseat('Quanquin Qi')
+unseat('Kori Inkpen')
+```
+
+2. Seat Quanquin Qi to the fake seat:
+```
+seat('Quanquin Qi', 'Fake')
+```
+
+3. As Panda is going to present now, I will move everyone from the presenter screen (Remote4) to other screens:
+```
+unseat('Ashley Feniello')
+unseat('Rick Gutierrez')
+unseat('Richard Hughes')
+```
+
+4. Move Ashley Feniello, Rick Gutierrez, and Richard Hughes to Remote1:
+```
+seat('Ashley Feniello', 'Remote1')
+seat('Rick Gutierrez', 'Remote1')
+seat('Richard Hughes', 'Remote1')
+```
+
+5. Finally, seat Payod Panda to the presenter screen (Remote4):
+```
+seat('Payod Panda', 'Remote4')
+```
+
+Now, the seating arrangement should be as follows:
+
+```
+Remote1: Ashley Feniello, Rick Gutierrez, Richard Hughes
+Remote2: Sean Rintel, Andy Wilson, 
+Remote3: John Tang
+Remote4: Payod Panda
+Fake: Quanquin Qi, Kori Inkpen
+```
+-- EXEC --------------------------------------------------------------
+unseat('Sasa Junuzovic') # unseat Sasa Junuzovic from Fake
+unseat('Quanquin Qi') # unseat Quanquin Qi from Fake
+unseat('Kori Inkpen') # unseat Kori Inkpen from Fake
+seat('Quanquin Qi', 'Fake') # seat Quanquin Qi at Fake
+unseat('Ashley Feniello') # unseat Ashley Feniello from Remote2
+unseat('Rick Gutierrez') # unseat Rick Gutierrez from Remote1
+unseat('Richard Hughes') # unseat Richard Hughes from Remote1
+seat('Ashley Feniello', 'Remote1') # seat Ashley Feniello at Remote1
+seat('Rick Gutierrez', 'Remote1') # seat Rick Gutierrez at Remote1
+seat('Richard Hughes', 'Remote1') # seat Richard Hughes at Remote1
+seat('Payod Panda', 'Remote4') # seat Payod Panda at Remote4
+-- STATE -------------------------------------------------------------
+
+        Curently seated at each screen are:
+        Remote1: Andy Wilson, Ashley Feniello, Rick Gutierrez, Richard Hughes
+        Remote2: Sean Rintel
+        Remote3: John Tang
+        Remote4: Payod Panda
+        Fake: Quanquin Qi
+
+## Example 3
+
+-- PROMPT ----------------------------------------------------------
+Put John on the middle screen and Ashley on the back right one
+
+-- RESPONSE ----------------------------------------------------------
+
+
+To seat John Tang on the middle screen, we can call the function seat('John Tang', 'Remote2') which will remove him from his current screen (Remote3) and move him to the middle screen (Remote2).
+
+To seat Ashley Feniello on the back right screen, we can call the function seat('Ashley Feniello', 'Remote3') which will remove her from her current screen (Remote1) and move her to the back right screen (Remote3).
+
+After executing these commands, the seating will be as follows:
+
+Remote1: Rick Gutierrez, Andy Wilson, Richard Hughes
+Remote2: Sean Rintel
+Remote3: Ashley Feniello, John Tang
+Remote4: 
+Fake: Sasa Junuzovic, Quanquin Qi, Kori Inkpen
+-- EXEC --------------------------------------------------------------
+seat('John Tang', 'Remote2') # move John Tang from Remote3 to Remote2
+seat('Ashley Feniello', 'Remote3') # move Ashley Feniello from Remote2 to Remote3
+-- STATE -------------------------------------------------------------
+
+        Curently seated at each screen are:
+        Remote1: Rick Gutierrez, Andy Wilson, Richard Hughes
+        Remote2: Sean Rintel, John Tang
+        Remote3: Ashley Feniello
         Remote4: 
         Fake: Sasa Junuzovic, Quanquin Qi, Kori Inkpen
