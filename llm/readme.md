@@ -5,6 +5,8 @@ https://stackoverflow.com/questions/68251169/unable-to-install-pyaudio-on-m1-mac
 
 pip install pyttsx3
 
+pip install -U openai-whisper
+
 ## Example 1
 
 -- BEFORE ------------------------------------------------------------
@@ -178,3 +180,42 @@ seat('Ashley Feniello', 'Remote3') # move Ashley Feniello from Remote2 to Remote
         Remote3: Ashley Feniello
         Remote4: 
         Fake: Sasa Junuzovic, Quanquin Qi, Kori Inkpen
+
+## CW
+
+    K6SWR DE K7ZCW, HI ASH HERE IN DEER PARK, WA. PSE QSO INFO
+    RIG IS IC-705 OR IC-7300 OR MTR4B. NAME HERE IS TOM. NW QRU
+    TNX OM. MY RIG IS IC-705 AND QTH IS DEER PARK, WA. OP NAME IS ASH. UR RST IS 599. HW CPY?
+    FB TNX ASH UR RST ALSO 599. QTH NEAR TACOMA, WA. WX SUNNY AND WARM. HW CPY?
+    WX HR CLOUDY & COOL. ES QSB. HW FB CPY?
+    SRI OM QSB HR ALSO. GL ES 73
+    73 OM ES TNX FER QSO. UR RST 599 NW QRT?
+    FB OM TNX FER QSO. UR RST 599 ALSO. QTH DEER PARK, WA. WX COOL BUT CLEAR. HW CPY?
+    WX HR NICE & WARM. HI TEMP 75F. HW CPY?
+    QRZ DE K7ZCW
+    WX HR COOL BUT NO RAIN. HW CPY?
+    COPY FB OM QRZ?
+    WX HERE ALSO COOL BUT NO RAIN. TNX FER QSO OM. 73
+    OK TNX FER FB QSO. ESPE FB WX RPT. 73 DE K7ZCW SK
+    TNX FER QSO K6SWR. GL ES 73
+    K6SWR DE K7ZCW
+    R R UR 599 599 IN DEER PARK WA
+    HW CPY?
+    K6SWR PSE QRS
+    K6SWR QRS PSE
+
+    r = sr.Recognizer()
+        with sr.Microphone(sample_rate=16000) as source:
+            r.adjust_for_ambient_noise(source)
+            print()
+            input('Press enter to continue...')
+            print('Say something...')
+            audio = r.listen(source)
+        try:
+            audio_data = audio.get_wav_data()
+            data_s16 = np.frombuffer(audio_data, dtype=np.int16, count=len(audio_data)//2, offset=0)
+            float_data = data_s16.astype(np.float32, order='C') / 32768.0
+            model = whisper.load_model("base")
+            result = model.transcribe(float_data)
+            prompt = result["text"]
+            print(f'HEARD: {prompt}')
