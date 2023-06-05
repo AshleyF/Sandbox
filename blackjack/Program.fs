@@ -62,24 +62,139 @@ let rec basic bet up hand =
     let hit () = draw hand |> cont
     let stand () = bet, hand
     let double () = (2. * bet), (draw hand)
-    match value hand with
-    | Hard h when h >= 17 -> stand () // stand on hard 17+
-    | Hard 16 | Hard 15 | Hard 14 | Hard 13 -> if up = '2' || up = '3' || up = '4' || up = '5' || up = '6' then stand () else hit () // stand on hard 13-16 against 2-6
-    | Hard 12 -> if up = '4' || up = '5' || up = '6' then stand () else hit () // stand on hard 12 aginst 4-6
-    | Hard 11 -> if up = 'A' then hit () else double () // double hard 11, except aginst A
-    | Hard 10 -> if up = 'T' || up = 'A' then hit () else double () // double hard 10, except against A or T
-    | Hard 9 -> if up = '3' || up = '4' || up = '5' || up = '6' then double () else hit () // double hard 9 against 3-6
-    | Hard h -> if h <= 8 then hit () else failwith "Unexpected hard hand value" // hit 8-
-    | Soft s when s >= 19 -> stand () // stand on soft 19+
-    | Soft 18 ->
-        if up = '2' || up = '7' || up = '8' then stand () // double soft 18 against 2, 7, 8
-        elif up = '3' || up = '4' || up = '5' || up = '6' then double () // double soft 18 against 3-6
-        else hit () // otherwise hit
-    | Soft 17 -> if up = '3' || up = '4' || up = '5' || up = '6' then double () else hit () // double soft 17 against 3-6
-    | Soft 16 | Soft 15 -> if up = '4' || up = '5' || up = '6' then double () else hit () // double soft 15, 16 against 4-6
-    | Soft 14 | Soft 13 -> if up = '5' || up = '6' then double () else hit () // double soft 13, 14 against 5, 6
-    | Soft _ -> failwith "Unexpected soft hand value"
-    | _ -> stand ()
+    let initial = Seq.length hand = 2
+    match up with
+    | '2' ->
+        match hand with
+        | ['A'; '6'] | ['6'; 'A'] -> double ()
+        | _ ->
+            match value hand with
+            | Hard h when h >= 13 -> stand ()
+            | Hard 12 -> hit ()
+            | Hard 11 | Hard 10 | Hard 9 -> if initial then double () else hit ()
+            | Hard h when h <= 8 -> hit ()
+            | Soft s when s >= 18 -> stand ()
+            | Soft s when s <= 17 -> hit ()
+            | Bust | Natural -> stand ()
+            | _ -> failwith "Unexpected case"
+    | '3' ->
+        match hand with
+        | ['A'; '7'] | ['7'; 'A']
+        | ['A'; '6'] | ['6'; 'A'] -> double ()
+        | _ ->
+            match value hand with
+            | Hard h when h >= 13 -> stand ()
+            | Hard 12 -> hit ()
+            | Hard 11 | Hard 10 | Hard 9 -> if initial then double () else hit ()
+            | Hard h when h <= 8 -> hit ()
+            | Soft s when s >= 18 -> stand ()
+            | Soft s when s <= 17 -> hit ()
+            | Bust | Natural -> stand ()
+            | _ -> failwith "Unexpected case"
+    | '4' ->
+        match hand with
+        | ['A'; '7'] | ['7'; 'A']
+        | ['A'; '6'] | ['6'; 'A']
+        | ['A'; '5'] | ['5'; 'A']
+        | ['A'; '4'] | ['4'; 'A']
+        | ['A'; '3'] | ['3'; 'A']
+        | ['A'; '2'] | ['2'; 'A'] -> double ()
+        | _ ->
+            match value hand with
+            | Hard h when h >= 12 -> stand ()
+            | Hard 11 | Hard 10 | Hard 9 -> if initial then double () else hit ()
+            | Hard h when h <= 8 -> hit ()
+            | Soft s when s >= 18 -> stand ()
+            | Soft s when s <= 17 -> hit ()
+            | Bust | Natural -> stand ()
+            | _ -> failwith "Unexpected case"
+    | '5' ->
+        match hand with
+        | ['A'; '7'] | ['7'; 'A']
+        | ['A'; '6'] | ['6'; 'A']
+        | ['A'; '5'] | ['5'; 'A']
+        | ['A'; '4'] | ['4'; 'A']
+        | ['A'; '3'] | ['3'; 'A']
+        | ['A'; '2'] | ['2'; 'A']
+        | ['A'; 'A'] | ['A'; 'A'] -> double () // only if can't be split
+        | _ ->
+            match value hand with
+            | Hard h when h >= 12 -> stand ()
+            | Hard 11 | Hard 10 | Hard 9 -> if initial then double () else hit ()
+            | Hard h when h <= 8 -> hit ()
+            | Soft s when s >= 18 -> stand ()
+            | Soft s when s <= 17 -> hit ()
+            | Bust | Natural -> stand ()
+            | _ -> failwith "Unexpected case"
+    | '6' ->
+        match hand with
+        | ['A'; '7'] | ['7'; 'A']
+        | ['A'; '6'] | ['6'; 'A']
+        | ['A'; '5'] | ['5'; 'A']
+        | ['A'; '4'] | ['4'; 'A']
+        | ['A'; '3'] | ['3'; 'A']
+        | ['A'; '2'] | ['2'; 'A']
+        | ['A'; 'A'] | ['A'; 'A'] -> double () // only if can't be split
+        | _ ->
+            match value hand with
+            | Hard h when h >= 12 -> stand ()
+            | Hard 11 | Hard 10 | Hard 9 -> if initial then double () else hit ()
+            | Hard h when h <= 8 -> hit ()
+            | Soft s when s >= 18 -> stand ()
+            | Soft s when s <= 17 -> hit ()
+            | Bust | Natural -> stand ()
+            | _ -> failwith "Unexpected case"
+    | '7' ->
+        match value hand with
+        | Hard h when h >= 17 -> stand ()
+        | Hard 16 | Hard 15 | Hard 14 | Hard 13 | Hard 12 -> hit ()
+        | Hard 11 | Hard 10 -> if initial then double () else hit ()
+        | Hard h when h <= 9 -> hit ()
+        | Soft s when s >= 18 -> stand ()
+        | Soft s when s <= 17 -> hit ()
+        | Bust | Natural -> stand ()
+        | _ -> failwith "Unexpected case"
+    | '8' ->
+        match value hand with
+        | Hard h when h >= 17 -> stand ()
+        | Hard 16 | Hard 15 | Hard 14 | Hard 13 | Hard 12 -> hit ()
+        | Hard 11 | Hard 10 -> if initial then double () else hit ()
+        | Hard h when h <= 9 -> hit ()
+        | Soft s when s >= 18 -> stand ()
+        | Soft s when s <= 17 -> hit ()
+        | Bust | Natural -> stand ()
+        | _ -> failwith "Unexpected case"
+    | '9' ->
+        match value hand with
+        | Hard h when h >= 17 -> stand ()
+        | Hard 16 | Hard 15 | Hard 14 | Hard 13 | Hard 12 -> hit ()
+        | Hard 11 | Hard 10 -> if initial then double () else hit ()
+        | Hard h when h <= 9 -> hit ()
+        | Soft s when s >= 19 -> stand ()
+        | Soft s when s <= 18 -> hit ()
+        | Bust | Natural -> stand ()
+        | _ -> failwith "Unexpected case"
+    | 'T' ->
+        match value hand with
+        | Hard h when h >= 17 -> stand ()
+        | Hard 16 | Hard 15 | Hard 14 | Hard 13 | Hard 12 -> hit ()
+        | Hard 11 -> if initial then double () else hit ()
+        | Hard h when h <= 10 -> hit ()
+        | Soft s when s >= 19 -> stand ()
+        | Soft s when s <= 18 -> hit ()
+        | Bust | Natural -> stand ()
+        | _ -> failwith "Unexpected case"
+    | 'A' ->
+        match value hand with
+        | Hard h when h >= 17 -> stand ()
+        | Hard 16 | Hard 15 | Hard 14 | Hard 13 | Hard 12 -> hit ()
+        | Hard 11 -> if initial then double () else hit ()
+        | Hard h when h <= 10 -> hit ()
+        | Soft s when s >= 18 -> stand ()
+        | Soft s when s <= 17 -> hit ()
+        | Bust | Natural -> stand ()
+        | _ -> failwith "Unexpected case"
+    | _ -> failwith "Unexpected up card"
 
 let rec casino dhand phand strategy =
     let up = Seq.head dhand
@@ -108,15 +223,35 @@ let rec casino dhand phand strategy =
         let c = Seq.head phand
         let s () = casino dhand (draw [c]) strategy
         (s ()) + (s ())
-    match phand with
-    | ['A'; 'A'] -> split () // split As
-    | ['9'; '9'] when up = '2' || up = '3' || up = '4' || up = '5' || up = '6' || up = '8' || up = '9' -> split () // split 9s against 2-6, 8, 9
-    | ['8'; '8'] -> split () // split 8s
-    | ['7'; '7'] when up = '2' || up = '3' || up = '4' || up = '5' || up = '6' || up = '7' -> split () // split 7s against 2-7
-    | ['6'; '6'] when up = '2' || up = '3' || up = '4' || up = '5' || up = '6' -> split () // split 6s against 2-6
-    | ['4'; '4'] when up = '5' || up = '6' -> split () // split 4s against 5, 6
-    | ['3'; '3'] | ['2'; '2'] when up = '2' || up = '3' || up = '4' || up = '5' || up = '6' || up = '7' -> split () // split 2, 3 against 2-7
-    | _ -> normal ()
+    match up with
+    | '2' | '3' | '4' | '6' ->
+        match phand with
+        | ['A'; 'A'] | ['9'; '9'] | ['8'; '8'] | ['7'; '7']
+        | ['6'; '6'] | ['3'; '3'] | ['2'; '2'] -> split ()
+        | _ -> normal ()
+    | '5' ->
+        match phand with
+        | ['A'; 'A'] | ['9'; '9'] | ['8'; '8'] | ['7'; '7']
+        | ['6'; '6'] | ['4'; '4'] | ['3'; '3'] | ['2'; '2'] -> split ()
+        | _ -> normal ()
+    | '7' ->
+        match phand with
+        | ['A'; 'A'] | ['8'; '8'] | ['7'; '7']
+        | ['6'; '6'] | ['3'; '3'] | ['2'; '2'] -> split ()
+        | _ -> normal ()
+    | '8' ->
+        match phand with
+        | ['A'; 'A'] | ['9'; '9'] | ['8'; '8'] | ['7'; '7'] -> split ()
+        | _ -> normal ()
+    | '9' ->
+        match phand with
+        | ['A'; 'A'] | ['9'; '9'] | ['8'; '8'] -> split ()
+        | _ -> normal ()
+    | 'T' | 'A' ->
+        match phand with
+        | ['A'; 'A'] | ['8'; '8'] -> split ()
+        | _ -> normal ()
+    | _ -> failwith "Unexpected up card"
 
 let rec simulate total iter =
     //printfn "Total: %.2f" total
@@ -126,7 +261,13 @@ let rec simulate total iter =
     else total
 
 let iter = 1000000000
-(simulate 0. iter) / (float iter) * 100. |> printfn "Percentage: %.2f"
+let start = DateTime.Now
+(simulate 0. iter) / (float iter) * 100. |> printfn "Percentage: %f"
+printfn "Elapsed: %A" (DateTime.Now - start)
+// Percentage: -0.675426
+// Elapsed: 01:13:59.3664570
+// Percentage: -0.305162
+// Elapsed: 01:13:13.4345920
 (*
 let rec simulate up map iter =
     if iter > 0 then
