@@ -120,8 +120,8 @@ let rec basic bet up hand =
         | _ ->
             match value hand with
             | Hard h when h >= 12 -> stand ()
-            | Hard 11 | Hard 10 | Hard 9 -> if initial then double () else hit ()
-            | Hard h when h <= 8 -> hit ()
+            | Hard 11 | Hard 10 | Hard 9 | Hard 8 -> if initial then double () else hit ()
+            | Hard h when h <= 7 -> hit ()
             | Soft s when s >= 18 -> stand ()
             | Soft s when s <= 17 -> hit ()
             | Bust | Natural -> stand ()
@@ -138,8 +138,8 @@ let rec basic bet up hand =
         | _ ->
             match value hand with
             | Hard h when h >= 12 -> stand ()
-            | Hard 11 | Hard 10 | Hard 9 -> if initial then double () else hit ()
-            | Hard h when h <= 8 -> hit ()
+            | Hard 11 | Hard 10 | Hard 9 | Hard 8 -> if initial then double () else hit ()
+            | Hard h when h <= 7 -> hit ()
             | Soft s when s >= 18 -> stand ()
             | Soft s when s <= 17 -> hit ()
             | Bust | Natural -> stand ()
@@ -253,21 +253,27 @@ let rec casino dhand phand strategy =
         | _ -> normal ()
     | _ -> failwith "Unexpected up card"
 
-let rec simulate total iter =
-    //printfn "Total: %.2f" total
-    let result = casino ([] |> draw |> draw) ([] |> draw |> draw) basic
-    if iter > 0
-    then simulate (total + result) (iter - 1)
-    else total
+let simulate total iter =
+    let rec simulate' total iter high low =
+        //printfn "Total: %.2f" total
+        let result = casino ([] |> draw |> draw) ([] |> draw |> draw) basic
+        let total' = total + result
+        if iter > 0L
+        then simulate' total' (iter - 1L) (max total' high) (min total' low)
+        else total, high, low
+    simulate' total iter 0. 0.
 
-let iter = 1000000000
+let iter = 200L
 let start = DateTime.Now
-(simulate 0. iter) / (float iter) * 100. |> printfn "Percentage: %f"
+let percentage, high, low = simulate 0. iter
+printfn "Percentage: %f (high: %i low: %i)" (percentage / (float iter) * 100.) (int high) (int low)
 printfn "Elapsed: %A" (DateTime.Now - start)
 // Percentage: -0.675426
 // Elapsed: 01:13:59.3664570
 // Percentage: -0.305162
 // Elapsed: 01:13:13.4345920
+// Percentage: -0.325108
+// Elapsed: 06:12:03.1568800
 (*
 let rec simulate up map iter =
     if iter > 0 then

@@ -37,3 +37,7 @@ Experimenting with WebSockets using bare-metal socket APIs in F# to create an HT
 ## [Morse](./morse)
 
 A tool to generate all words containing a subset of characters (for Morse code practice).
+
+## [Blackjack](./blackjack)
+
+Reproduce results from Edward Thorp's "Beat the Dealer". Simulate basic strategy.
