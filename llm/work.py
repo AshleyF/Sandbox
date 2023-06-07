@@ -1,6 +1,6 @@
 import openai
 
-openai.api_key = '<insert key>'
+openai.api_key = '<insert_key>'
 
 currentState = {
     'Remote1': ['Rick Gutierrez', 'Andy Wilson', 'Richard Hughes'],
