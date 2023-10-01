@@ -1,5 +1,9 @@
+# Whisper required Python 3.8+ and FFMPEG
 # Linux: sudo apt update && sudo apt install ffmpeg
 # Mac: brew install ffmpeg
+
+# sudo apt update && sudo apt upgrade -y
+# sudo pip install torch torchvision torchaudio
 
 import whisper # pip install git+https://github.com/openai/whisper.git 
 import speech_recognition as sr # pip install SpeechRecognition
