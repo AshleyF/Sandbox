@@ -46,32 +46,44 @@ def stanley(transcript, instructions):
     }
 
     If what is said or asked seems highly irrelevant to what you, as Stanley, can help with, return: { irrelevant: true }
-    But, if you are addressed directly (e.g. 'Hey Stanley, ...') then explain why you can't help. For example, { irrelevant: true, say: 'Sorry, I can't solve a Rubik's cube' }
+    But, if you are addressed directly (e.g. 'Hey Stanley, ...') then explain why you can't help. For example, { irrelevant: true, say: 'Sorry, ...' }
 
     The current state of the house is:
     - The curtains are closed
-    - The date is Noveber 21, 2023
+    - The date is November 21, 2023
     ''' +
     f'\nThe following is a trancript of the recent conversation between the human and you (Stanley):\n\n{transcript}' +
     f'\nRespond to the following instructions:\n\n{instructions}')
     return result
 
-import pyttsx3
-import time
+from playsound import playsound
 
-speech = pyttsx3.init()
+def say(text):
+    response = client.audio.speech.create(
+        model="tts-1",
+        voice="echo",
+        input=text,
+    )
 
-def say(message):
-    global transcript
-    transcript = f'{transcript}\nStanley: {message}'
-    print(f'SAY: {message}')
-    speech.say(message)
-    speech.runAndWait()
-    print('DONE')
-    time.sleep(7)
-    if speech._inLoop:
-        print('END LOOP')
-        speech.endLoop()
+    response.stream_to_file("output.mp3")
+    playsound('output.mp3')
+
+#import pyttsx3
+#import time
+#
+#speech = pyttsx3.init()
+#
+#def say(message):
+#    global transcript
+#    transcript = f'{transcript}\nStanley: {message}'
+#    print(f'SAY: {message}')
+#    speech.say(message)
+#    speech.runAndWait()
+#    print('DONE')
+#    time.sleep(7)
+#    if speech._inLoop:
+#        print('END LOOP')
+#        speech.endLoop()
 
 # Whisper required Python 3.8+ and FFMPEG
 # Linux: sudo apt update && sudo apt install ffmpeg
@@ -128,14 +140,3 @@ def listen():
     stop_listening(wait_for_stop=False)
 
 listen()
-
-def speak(text):
-    response = client.audio.speech.create(
-        model="tts-1",
-        voice="echo",
-        input="Hello world! This is a streaming test.",
-    )
-
-    response.stream_to_file("output.mp3")
-
-speak('this is a test')
