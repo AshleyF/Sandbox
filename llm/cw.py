@@ -1,9 +1,9 @@
-import openai
+from openai import OpenAI
 
-openai.api_key = '<insert_key>'
+client = OpenAI()
 
 def query(prompt):
-    completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": prompt}])
+    completion = client.chat.completions.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": prompt}])
     return completion.choices[0].message.content
 
 def automation(prompt):

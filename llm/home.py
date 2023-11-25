@@ -1,4 +1,6 @@
-import openai
+from openai import OpenAI
+
+client = OpenAI()
 import whisper
 import os
 import asyncio
@@ -10,7 +12,7 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-openai.api_key = '<insert_key>'
+
 
 speech = pyttsx3.init()
 
@@ -19,7 +21,7 @@ def say(message):
     speech.runAndWait()
 
 def query(prompt):
-    completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": prompt}])
+    completion = client.chat.completions.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": prompt}])
     return completion.choices[0].message.content
 
 async def kasaBulbColor(name, h, s, v):
