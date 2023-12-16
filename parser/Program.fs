@@ -41,6 +41,7 @@ type Json = // TODO
     | Bool of bool
     | Null
     | Number of char list
+    | Whitespace of char list
 
 let wsChar = expect ' ' ||| expect '\n' ||| expect '\r' ||| expect '\t'
 
