@@ -1,6 +1,8 @@
-import openai
+from openai import OpenAI
 
-openai.api_key = '<insert key>'
+client = OpenAI()
+
+
 
 currentState = {
     'Remote1': ['Rick Gutierrez', 'Andy Wilson', 'Richard Hughes'],
@@ -43,7 +45,7 @@ def unseat(name):
         currentState[current].remove(name)
 
 def query(prompt):
-    completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": prompt}])
+    completion = client.chat.completions.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": prompt}])
     return completion.choices[0].message.content
 
 def automation(prompt):
