@@ -3,16 +3,14 @@ open Keyboard
 
 type Mode = Normal | NormalPending of Key | Insert
 
-type Token = Char of char | Tab | Return
-
 type Direction = Forward | Backward
 
 type Model = {
     Beep   : bool
     Mode   : Mode
     Find   : (Direction * char) option
-    Before : Token list
-    After  : Token list }
+    Before : char list
+    After  : char list }
 
 type Input = {
     Key: Key
@@ -25,74 +23,48 @@ let init () = {
     Before = [] 
     After = [] }
 
-let tokenToChar = function
-    | Char c -> c
-    | Tab -> '\t'
-    | Return -> '\n'
-
 let view model =
     if model.Beep then Console.Beep()
-    let toString = Seq.map tokenToChar >> String.Concat
     Console.Clear()
-    model.Before |> Seq.rev |> toString |> Console.Write
+    model.Before |> Seq.rev |> String.Concat |> Console.Write
     let x, y = Console.CursorLeft, Console.CursorTop
-    model.After |> toString |> Console.Write
+    model.After |> String.Concat |> Console.Write
+    Console.WriteLine()
     Console.WriteLine()
     match model.Mode with
-    | Normal -> printf "NORMAL"
-    | NormalPending key -> printf $"NORMAL (pending {keyToString key})"
-    | Insert -> printf "INSERT"
+    | Normal -> printfn "NORMAL"
+    | NormalPending key -> printfn $"NORMAL (pending {keyToString key})"
+    | Insert -> printfn "INSERT"
+    Console.WriteLine()
     printfn "Model: %A" model
     Console.CursorLeft <- x
     Console.CursorTop <- y
 
 let update model input =
     let model = { model with Beep = false }
-    let scan predicate direction terminate line upto including model =
-        let rec scan' count model =
-            let forward = direction = Forward
-            match if forward then model.After else model.Before with
-            | h :: tail ->
-                if line && h = Return then
-                    if terminate then None else Some (count, model)
-                else
-                    let model' =
-                        if forward
-                        then { model with Before = h :: model.Before; After = tail }
-                        else { model with Before = tail; After = h :: model.After }
-                    if predicate h && (count <> 0 || including)
-                    then Some (count, if upto then model else model')
-                    else scan' (count + 1) model'
-            | [] -> if terminate then None else Some (count, model)
-        scan' 0 model
-    let rec left n beep model =
-        if n = 0 then model else
-        match model.Before with
-        | Return :: _ // cannot move past start of line
-        | [] -> { model with Beep = beep }
-        | c :: before -> left (n - 1) beep { model with Before = before; After = c :: model.After }
-    let rec right n beep model =
-        if n = 0 then model else
-        match model.After with
-        | _ :: [] // cannot move past last token of buffer
-        | _ :: Return :: _  // cannot move past end of line (note: second to last)
-        | [] -> { model with Beep = beep }
-        | c :: after -> right (n - 1) beep { model with After = after; Before = c :: model.Before }
+    let rec scan direction predicate model =
+        let recurse = scan direction predicate
+        if predicate model then Some model
+        elif direction = Forward
+        then match model.After with | h :: tail -> recurse { model with Before = h :: model.Before; After = tail } | [] -> None
+        else match model.Before with | h :: tail -> recurse { model with Before = tail; After = h :: model.After } | [] -> None
+    let expectSome = function Some x -> x | None -> failwith "Expected some value"
+    let rec left beep model =
+        match scan Backward (fun m -> m.Before.Length = model.Before.Length - 1) model with
+        | Some model -> model
+        | None -> { model with Beep = beep }
+    let rec right beep model =
+        match scan Forward (fun m -> m.After.Length > 0 (* under cursor *) && m.After.Length = model.After.Length - 1) model with
+        | Some model -> model
+        | None -> { model with Beep = beep }
     match model.Mode with
     | Normal ->
         match input.Key with
         | Key.I -> { model with Mode = Insert } // insert
-        | Key.H | Key.Backspace | Key.Left -> left 1 true model // left
-        | Key.L | Key.Space | Key.Right -> right 1 true model // right
-        | Key.K | Key.Up ->
-            match scan ((=) Return) Backward true false false true model with
-            | Some (count, model) -> // end of previous line
-                // scan predicate direction terminate line upto including model =
-                match scan ((=) Return) Backward false false false false model with
-                | Some (_, model) -> right count false model // attempt to alighn
-                | None -> failwith "Should never happen with scan terminate=false"
-            | None -> { model with Beep = true }
-        | Key.J | Key.Down -> model // down TODO
+        | Key.H | Key.Backspace | Key.Left -> left true model // left
+        | Key.L | Key.Space | Key.Right -> right true model // right
+        | Key.D0 -> scan Backward (fun m -> m.Before.Length = 0) model |> expectSome // column zero
+        | Key.Dollar -> scan Forward (fun m -> m.After.Length <= 1) model |> expectSome // end of line
         | Key.F -> { model with Mode = NormalPending Key.F }
         | Key.CapF -> { model with Mode = NormalPending Key.CapF }
         | Key.T -> { model with Mode = NormalPending Key.T }
@@ -103,8 +75,14 @@ let update model input =
         let find direction upto =
             match keyToChar input.Key with
             | Some c ->
-                match scan ((=) (Char c)) direction true true upto false normal with
-                | Some (_, normal) -> if direction = Forward then left 1 false normal else normal
+                let pred m =
+                    match direction, upto with
+                    | Forward,  false
+                    | Backward, false -> m.After <> model.After && match m.After with h :: _ -> h = c | [] -> false
+                    | Forward,  true  -> match m.After with _ :: h :: _ -> h = c | _ -> false
+                    | Backward, true  -> match m.Before with h :: _ -> h = c | [] -> false
+                match scan direction pred normal with
+                | Some normal -> normal
                 | None -> { normal with Beep = true }
             | None -> { normal with Beep = true }
         if input.Key = Key.Esc then normal else
@@ -113,16 +91,14 @@ let update model input =
         | Key.CapF -> find Backward false
         | Key.T    -> find Forward  true
         | Key.CapT -> find Backward true
-        | _ -> failwith "UNHANDLED: NormalPending {key}"
+        | _ -> failwith $"UNHANDLED: NormalPending {key}"
     | Insert ->
         match input.Key with
-        | Key.Esc -> { left 1 false model with Mode = Normal }
-        | Key.Return -> { model with Before = Return :: model.Before }
+        | Key.Esc -> { left false model with Mode = Normal }
         | k ->
             match keyToChar k with
-            | Some c -> { model with Before = Char c :: model.Before }
+            | Some c -> { model with Before = c :: model.Before }
             | None -> model
-        | _ -> Console.WriteLine($"UNHANDLED: Insert {input.Key}"); model
 
 keys ()
 |> Seq.map (fun (k, m) -> { Key = k; Modifier = m })
