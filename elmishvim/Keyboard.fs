@@ -3,215 +3,220 @@ module Keyboard
 open System
 
 // keyboard input mapped to Key, Modifier pairs
-// Shift is not a modifier, instead separate CapX and X (lowercase) Keys
 
 type Key =
     | A | B | C | D | E | F | G | H | I | J | K | L | M | N | O | P | Q | R | S | T | U | V | W | X | Y | Z
-    | CapA | CapB | CapC | CapD | CapE | CapF | CapG | CapH | CapI | CapJ | CapK | CapL | CapM | CapN | CapO | CapP | CapQ | CapR | CapS | CapT | CapU | CapV | CapW | CapX | CapY | CapZ
     | Esc | Tab | Backspace | Return | Space | Left | Right | Up | Down
     | Tilde | Bang | At | Pound | Dollar | Percent | Carot | Ampersand | Star | LParen | RParen | Underscore | Plus | Backtick
     | D1 | D2 | D3 | D4 | D5 | D6 | D7 | D8 | D9 | D0
     | Minus | Equals | LCurly | RCurly | Pipe | LSquare | RSquare | Backslash
     | Colon | Quote | Semicolon | Tick | LAngle | RAngle | Question | Comma | Dot | Slash
 
-type Modifier = Control | Meta
+type Modifier = Shift | Control | Meta
 
 let toKey (k : ConsoleKeyInfo) =
     let m, c = 
         match k.Modifiers with
         | ConsoleModifiers.None -> None, false
-        | ConsoleModifiers.Shift -> None, true // not treated as modifier
+        | ConsoleModifiers.Shift -> Some Shift, true
         | ConsoleModifiers.Control -> Some Control, false
         | ConsoleModifiers.Alt -> Some Meta, false
         | _ -> failwith $"Unexpected modifier ({k.Modifiers})"
-    let cap lower upper = if c then upper else lower
     match k.Key, k.KeyChar with
-    | ConsoleKey.A, _ -> cap A CapA, m
-    | ConsoleKey.B, _ -> cap B CapB, m
-    | ConsoleKey.C, _ -> cap C CapC, m
-    | ConsoleKey.D, _ -> cap D CapD, m
-    | ConsoleKey.E, _ -> cap E CapE, m
-    | ConsoleKey.F, _ -> cap F CapF, m
-    | ConsoleKey.G, _ -> cap G CapG, m
-    | ConsoleKey.H, _ -> cap H CapH, m
-    | ConsoleKey.I, _ -> cap I CapI, m
-    | ConsoleKey.J, _ -> cap J CapJ, m
-    | ConsoleKey.K, _ -> cap K CapK, m
-    | ConsoleKey.L, _ -> cap L CapL, m
-    | ConsoleKey.M, _ -> cap M CapM, m
-    | ConsoleKey.N, _ -> cap N CapN, m
-    | ConsoleKey.O, _ -> cap O CapO, m
-    | ConsoleKey.P, _ -> cap P CapP, m
-    | ConsoleKey.Q, _ -> cap Q CapQ, m
-    | ConsoleKey.R, _ -> cap R CapR, m
-    | ConsoleKey.S, _ -> cap S CapS, m
-    | ConsoleKey.T, _ -> cap T CapT, m
-    | ConsoleKey.U, _ -> cap U CapU, m
-    | ConsoleKey.V, _ -> cap V CapV, m
-    | ConsoleKey.W, _ -> cap W CapW, m
-    | ConsoleKey.X, _ -> cap X CapX, m
-    | ConsoleKey.Y, _ -> cap Y CapY, m
-    | ConsoleKey.Z, _ -> cap Z CapZ, m
-    | ConsoleKey.Escape, _ -> Esc, m
-    | ConsoleKey.Tab, _ -> Tab, m
-    | ConsoleKey.Backspace, _ -> Backspace, m
-    | ConsoleKey.Enter, _ -> Return, m
-    | ConsoleKey.Spacebar, _ -> Space, m
-    | ConsoleKey.LeftArrow, _ -> Left, m
-    | ConsoleKey.RightArrow, _ -> Right, m
-    | ConsoleKey.UpArrow, _ -> Up, m
-    | ConsoleKey.DownArrow, _ -> Down, m
-    | _, '~' -> Tilde, m
-    | _, '!' -> Bang, m
-    | _, '@' -> At, m
-    | _, '#' -> Pound, m
-    | _, '$' -> Dollar, m
-    | _, '%' -> Percent, m
-    | _, '^' -> Carot, m
-    | _, '&' -> Ampersand, m
-    | _, '*' -> Star, m
-    | _, '(' -> LParen, m
-    | _, ')' -> RParen, m
-    | _, '_' -> Underscore, m
-    | _, '+' -> Plus, m
-    | _, '`' -> Backtick, m
-    | _, '1' -> D1, m
-    | _, '2' -> D2, m
-    | _, '3' -> D3, m
-    | _, '4' -> D4, m
-    | _, '5' -> D5, m
-    | _, '6' -> D6, m
-    | _, '7' -> D7, m
-    | _, '8' -> D8, m
-    | _, '9' -> D9, m
-    | _, '0' -> D0, m
-    | _, '-' -> Minus, m
-    | _, '=' -> Equals, m
-    | _, '{' -> LCurly, m
-    | _, '}' -> RCurly, m
-    | _, '|' -> Pipe, m
-    | _, '[' -> LSquare, m
-    | _, ']' -> RSquare, m
-    | _, '\\' -> Backslash, m
-    | _, ':' -> Colon, m
-    | _, '"' -> Quote, m
-    | _, ';' -> Semicolon, m
-    | _, '\'' -> Tick, m
-    | _, '<' -> LAngle, m
-    | _, '>' -> RAngle, m
-    | _, '?' -> Question, m
-    | _, ',' -> Comma, m
-    | _, '.' -> Dot, m
-    | _, '/' -> Slash, m
+    | ConsoleKey.A, _ -> m, A
+    | ConsoleKey.B, _ -> m, B
+    | ConsoleKey.C, _ -> m, C
+    | ConsoleKey.D, _ -> m, D
+    | ConsoleKey.E, _ -> m, E
+    | ConsoleKey.F, _ -> m, F
+    | ConsoleKey.G, _ -> m, G
+    | ConsoleKey.H, _ -> m, H
+    | ConsoleKey.I, _ -> m, I
+    | ConsoleKey.J, _ -> m, J
+    | ConsoleKey.K, _ -> m, K
+    | ConsoleKey.L, _ -> m, L
+    | ConsoleKey.M, _ -> m, M
+    | ConsoleKey.N, _ -> m, N
+    | ConsoleKey.O, _ -> m, O
+    | ConsoleKey.P, _ -> m, P
+    | ConsoleKey.Q, _ -> m, Q
+    | ConsoleKey.R, _ -> m, R
+    | ConsoleKey.S, _ -> m, S
+    | ConsoleKey.T, _ -> m, T
+    | ConsoleKey.U, _ -> m, U
+    | ConsoleKey.V, _ -> m, V
+    | ConsoleKey.W, _ -> m, W
+    | ConsoleKey.X, _ -> m, X
+    | ConsoleKey.Y, _ -> m, Y
+    | ConsoleKey.Z, _ -> m, Z
+    | ConsoleKey.Escape, _ -> m, Esc
+    | ConsoleKey.Tab, _ -> m, Tab
+    | ConsoleKey.Backspace, _ -> m, Backspace
+    | ConsoleKey.Enter, _ -> m, Return
+    | ConsoleKey.Spacebar, _ -> m, Space
+    | ConsoleKey.LeftArrow, _ -> m, Left
+    | ConsoleKey.RightArrow, _ -> m, Right
+    | ConsoleKey.UpArrow, _ -> m, Up
+    | ConsoleKey.DownArrow, _ -> m, Down
+    | _, '~' -> m, Tilde
+    | _, '!' -> m, Bang
+    | _, '@' -> m, At
+    | _, '#' -> m, Pound
+    | _, '$' -> m, Dollar
+    | _, '%' -> m, Percent
+    | _, '^' -> m, Carot
+    | _, '&' -> m, Ampersand
+    | _, '*' -> m, Star
+    | _, '(' -> m, LParen
+    | _, ')' -> m, RParen
+    | _, '_' -> m, Underscore
+    | _, '+' -> m, Plus
+    | _, '`' -> m, Backtick
+    | _, '1' -> m, D1
+    | _, '2' -> m, D2
+    | _, '3' -> m, D3
+    | _, '4' -> m, D4
+    | _, '5' -> m, D5
+    | _, '6' -> m, D6
+    | _, '7' -> m, D7
+    | _, '8' -> m, D8
+    | _, '9' -> m, D9
+    | _, '0' -> m, D0
+    | _, '-' -> m, Minus
+    | _, '=' -> m, Equals
+    | _, '{' -> m, LCurly
+    | _, '}' -> m, RCurly
+    | _, '|' -> m, Pipe
+    | _, '[' -> m, LSquare
+    | _, ']' -> m, RSquare
+    | _, '\\' -> m, Backslash
+    | _, ':' -> m, Colon
+    | _, '"' -> m, Quote
+    | _, ';' -> m, Semicolon
+    | _, '\'' -> m, Tick
+    | _, '<' -> m, LAngle
+    | _, '>' -> m, RAngle
+    | _, '?' -> m, Question
+    | _, ',' -> m, Comma
+    | _, '.' -> m, Dot
+    | _, '/' -> m, Slash
     | _ -> failwith $"Unexpected console key ({k.Key} {k.KeyChar})"
 
 let keyToString = function
-    | A -> "a"
-    | B -> "b"
-    | C -> "c"
-    | D -> "d"
-    | E -> "e"
-    | F -> "f"
-    | G -> "g"
-    | H -> "h"
-    | I -> "i"
-    | J -> "j"
-    | K -> "k"
-    | L -> "l"
-    | M -> "m"
-    | N -> "n"
-    | O -> "o"
-    | P -> "p"
-    | Q -> "q"
-    | R -> "r"
-    | S -> "s"
-    | T -> "t"
-    | U -> "u"
-    | V -> "v"
-    | W -> "w"
-    | X -> "x"
-    | Y -> "y"
-    | Z -> "z"
-    | CapA -> "A"
-    | CapB -> "B"
-    | CapC -> "C"
-    | CapD -> "D"
-    | CapE -> "E"
-    | CapF -> "F"
-    | CapG -> "G"
-    | CapH -> "H"
-    | CapI -> "I"
-    | CapJ -> "J"
-    | CapK -> "K"
-    | CapL -> "L"
-    | CapM -> "M"
-    | CapN -> "N"
-    | CapO -> "O"
-    | CapP -> "P"
-    | CapQ -> "Q"
-    | CapR -> "R"
-    | CapS -> "S"
-    | CapT -> "T"
-    | CapU -> "U"
-    | CapV -> "V"
-    | CapW -> "W"
-    | CapX -> "X"
-    | CapY -> "Y"
-    | CapZ -> "Z"
-    | Esc -> "<esc>"
-    | Tab -> "<tab>"
-    | Backspace -> "<bs>"
-    | Return -> "<cr>"
-    | Space -> " " // <space>
-    | Left -> "<left>"
-    | Right -> "<right>"
-    | Up -> "<up>"
-    | Down -> "<down>"
-    | Tilde -> "~"
-    | Bang -> "!"
-    | At -> "@"
-    | Pound -> "#"
-    | Dollar -> "$"
-    | Percent -> "%"
-    | Carot -> "^"
-    | Ampersand -> "&"
-    | Star -> "*"
-    | LParen -> "("
-    | RParen -> ")"
-    | Underscore -> "_"
-    | Plus -> "+"
-    | Backtick -> "`"
-    | D1 -> "1"
-    | D2 -> "2"
-    | D3 -> "3"
-    | D4 -> "4"
-    | D5 -> "5"
-    | D6 -> "6"
-    | D7 -> "7"
-    | D8 -> "8"
-    | D9 -> "9"
-    | D0 -> "0"
-    | Minus -> "-"
-    | Equals -> "="
-    | LCurly -> "{"
-    | RCurly -> "}"
-    | Pipe -> "|"
-    | LSquare -> "["
-    | RSquare -> "]"
-    | Backslash -> "\\"
-    | Colon -> ":"
-    | Quote -> "\""
-    | Semicolon -> ";"
-    | Tick -> "'"
-    | LAngle -> "<"
-    | RAngle -> ">"
-    | Question -> "?"
-    | Comma -> ","
-    | Dot -> "."
-    | Slash -> "/"
+    | None, A -> "a"
+    | None, B -> "b"
+    | None, C -> "c"
+    | None, D -> "d"
+    | None, E -> "e"
+    | None, F -> "f"
+    | None, G -> "g"
+    | None, H -> "h"
+    | None, I -> "i"
+    | None, J -> "j"
+    | None, K -> "k"
+    | None, L -> "l"
+    | None, M -> "m"
+    | None, N -> "n"
+    | None, O -> "o"
+    | None, P -> "p"
+    | None, Q -> "q"
+    | None, R -> "r"
+    | None, S -> "s"
+    | None, T -> "t"
+    | None, U -> "u"
+    | None, V -> "v"
+    | None, W -> "w"
+    | None, X -> "x"
+    | None, Y -> "y"
+    | None, Z -> "z"
+    | Some Shift, A -> "A"
+    | Some Shift, B -> "B"
+    | Some Shift, C -> "C"
+    | Some Shift, D -> "D"
+    | Some Shift, E -> "E"
+    | Some Shift, F -> "F"
+    | Some Shift, G -> "G"
+    | Some Shift, H -> "H"
+    | Some Shift, I -> "I"
+    | Some Shift, J -> "J"
+    | Some Shift, K -> "K"
+    | Some Shift, L -> "L"
+    | Some Shift, M -> "M"
+    | Some Shift, N -> "N"
+    | Some Shift, O -> "O"
+    | Some Shift, P -> "P"
+    | Some Shift, Q -> "Q"
+    | Some Shift, R -> "R"
+    | Some Shift, S -> "S"
+    | Some Shift, T -> "T"
+    | Some Shift, U -> "U"
+    | Some Shift, V -> "V"
+    | Some Shift, W -> "W"
+    | Some Shift, X -> "X"
+    | Some Shift, Y -> "Y"
+    | Some Shift, Z -> "Z"
+    | None, Esc -> "<esc>"
+    | None, Tab -> "<tab>"
+    | None, Backspace -> "<bs>"
+    | None, Return -> "<cr>"
+    | None, Space -> " " // <space>
+    | None, Left -> "<left>"
+    | None, Right -> "<right>"
+    | None, Up -> "<up>"
+    | None, Down -> "<down>"
+    | None, Tilde -> "~"
+    | None, Bang -> "!"
+    | None, At -> "@"
+    | None, Pound -> "#"
+    | None, Dollar -> "$"
+    | None, Percent -> "%"
+    | None, Carot -> "^"
+    | None, Ampersand -> "&"
+    | None, Star -> "*"
+    | None, LParen -> "("
+    | None, RParen -> ")"
+    | None, Underscore -> "_"
+    | None, Plus -> "+"
+    | None, Backtick -> "`"
+    | None, D1 -> "1"
+    | None, D2 -> "2"
+    | None, D3 -> "3"
+    | None, D4 -> "4"
+    | None, D5 -> "5"
+    | None, D6 -> "6"
+    | None, D7 -> "7"
+    | None, D8 -> "8"
+    | None, D9 -> "9"
+    | None, D0 -> "0"
+    | None, Minus -> "-"
+    | None, Equals -> "="
+    | None, LCurly -> "{"
+    | None, RCurly -> "}"
+    | None, Pipe -> "|"
+    | None, LSquare -> "["
+    | None, RSquare -> "]"
+    | None, Backslash -> "\\"
+    | None, Colon -> ":"
+    | None, Quote -> "\""
+    | None, Semicolon -> ";"
+    | None, Tick -> "'"
+    | None, LAngle -> "<"
+    | None, RAngle -> ">"
+    | None, Question -> "?"
+    | None, Comma -> ","
+    | None, Dot -> "."
+    | None, Slash -> "/"
+    | Some Shift, Tab -> "<S-Tab>"
+    | Some Shift, Left -> "<S-Left>"
+    | Some Shift, Right -> "<S-Right>"
+    | m, k -> failwith $"Unexpected console key ({m} {k})"
 
 let keyToChar key = let str = keyToString key in if str.Length = 1 then Some str[0] else None
 
 let rec keys () = seq {
     yield Console.ReadKey(true) |> toKey
     yield! keys () }
+
+//while true do
+//    let k = Console.ReadKey()
+//    Console.WriteLine($"KEY: {k.Key} {k.KeyChar} {k.Modifiers}")

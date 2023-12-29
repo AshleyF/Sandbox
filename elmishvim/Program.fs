@@ -1,7 +1,7 @@
 open System
 open Keyboard
 
-type Mode = Normal | NormalPending of Key | Insert
+type Mode = Normal | NormalPending of Modifier option * Key | Insert
 
 type Direction = Forward | Backward
 
@@ -11,10 +11,6 @@ type Model = {
     Find   : (Direction * char) option
     Before : char list
     After  : char list }
-
-type Input = {
-    Key: Key
-    Modifier: Modifier option }
 
 let init () = {
     Beep = false
@@ -33,7 +29,7 @@ let view model =
     Console.WriteLine()
     match model.Mode with
     | Normal -> printfn "NORMAL"
-    | NormalPending key -> printfn $"NORMAL (pending {keyToString key})"
+    | NormalPending (modifier, key) -> printfn $"NORMAL (pending {keyToString (modifier, key)})"
     | Insert -> printfn "INSERT"
     Console.WriteLine()
     printfn "Model: %A" model
@@ -57,23 +53,36 @@ let update model input =
         match scan Forward (fun m -> m.After.Length > 0 (* under cursor *) && m.After.Length = model.After.Length - 1) model with
         | Some model -> model
         | None -> { model with Beep = beep }
+    let isWordChar c = c = '_' || Char.IsLetterOrDigit(c)
+    let isEsc (m, k) = k = Key.Esc || (m = Some Control && k = Key.LSquare)
     match model.Mode with
     | Normal ->
-        match input.Key with
-        | Key.I -> { model with Mode = Insert } // insert
-        | Key.H | Key.Backspace | Key.Left -> left true model // left
-        | Key.L | Key.Space | Key.Right -> right true model // right
-        | Key.D0 -> scan Backward (fun m -> m.Before.Length = 0) model |> expectSome // column zero
-        | Key.Dollar -> scan Forward (fun m -> m.After.Length <= 1) model |> expectSome // end of line
-        | Key.F -> { model with Mode = NormalPending Key.F }
-        | Key.CapF -> { model with Mode = NormalPending Key.CapF }
-        | Key.T -> { model with Mode = NormalPending Key.T }
-        | Key.CapT -> { model with Mode = NormalPending Key.CapT }
-        | _ -> Console.WriteLine($"UNHANDLED: Normal {input.Key}"); model
-    | NormalPending key ->
+        match input with
+        | None, Key.I -> { model with Mode = Insert } // insert
+        | None, Key.H | None, Key.Backspace | None, Key.Left -> left true model // left
+        | None, Key.L | None, Key.Space | None, Key.Right -> right true model // right
+        | None, Key.D0 -> scan Backward (fun m -> m.Before.Length = 0) model |> expectSome // column zero
+        | None, Key.Dollar -> scan Forward (fun m -> m.After.Length <= 1) model |> expectSome // end of line
+        | None, Key.F -> { model with Mode = NormalPending (None, Key.F) } // find
+        | Some Shift, Key.F -> { model with Mode = NormalPending (Some Shift, Key.F) } // find-reverse
+        | None, Key.T -> { model with Mode = NormalPending (None, Key.T) } // to
+        | Some Shift, Key.T -> { model with Mode = NormalPending (Some Shift, Key.T) } // to-reverse
+        | None, Key.X ->
+            let model = if model.After.Length > 0 then { model with After = model.After.Tail } else model // delete under cursor
+            if model.After.Length = 0 then left false model else model // move left if off end
+        | None, Key.W | Some Shift, Key.Right -> // word (note: spans lines)
+            model
+            |> scan Forward (fun m -> m.After.Length <= 1 || not (isWordChar m.After[0])) |> expectSome // first non-word char (or end)
+            |> scan Forward (fun m -> m.After.Length <= 1 || isWordChar m.After[0]) |> expectSome // first word char following (or end)
+        | None, Key.B | Some Shift, Key.Left -> // back word (note: spans lines)
+            model
+            |> left false
+            |> scan Backward (fun m -> m.Before.Length = 0 || not (isWordChar m.Before[0])) |> expectSome // first non-word char (or end)
+        | _ -> Console.WriteLine($"UNHANDLED: Normal {input}"); model
+    | NormalPending (modifier, key) ->
         let normal = { model with Mode = Normal }
         let find direction upto =
-            match keyToChar input.Key with
+            match keyToChar input with
             | Some c ->
                 let pred m =
                     match direction, upto with
@@ -85,22 +94,21 @@ let update model input =
                 | Some normal -> normal
                 | None -> { normal with Beep = true }
             | None -> { normal with Beep = true }
-        if input.Key = Key.Esc then normal else
-        match key with
-        | Key.F    -> find Forward  false
-        | Key.CapF -> find Backward false
-        | Key.T    -> find Forward  true
-        | Key.CapT -> find Backward true
-        | _ -> failwith $"UNHANDLED: NormalPending {key}"
+        if isEsc input then normal else
+        match (modifier, key) with
+        | None,       Key.F -> find Forward  false
+        | Some Shift, Key.F -> find Backward false
+        | None,       Key.T -> find Forward  true
+        | Some Shift, Key.T -> find Backward true
+        | _ -> failwith $"UNHANDLED: NormalPending {input}"
     | Insert ->
-        match input.Key with
-        | Key.Esc -> { left false model with Mode = Normal }
+        if isEsc input then { left false model with Mode = Normal } else
+        match input with
         | k ->
             match keyToChar k with
             | Some c -> { model with Before = c :: model.Before }
             | None -> model
 
 keys ()
-|> Seq.map (fun (k, m) -> { Key = k; Modifier = m })
 |> Seq.scan update (init ())
 |> Seq.iter view
