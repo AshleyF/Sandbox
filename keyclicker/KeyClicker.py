@@ -5,8 +5,13 @@ import pygame
 pygame.init()
 pygame.mixer.init()
 
+def sound(key):
+    s = pygame.mixer.Sound(f'sounds/{key}.mp3')
+    s.set_volume(0.1)
+    return s
+
 keys = list(string.ascii_uppercase) + ['BACKSPACE', 'CAPS LOCK', 'ENTER', 'SPACE']
-keySounds = dict(map(lambda k: (k, pygame.mixer.Sound(f'sounds/{k}.mp3')), keys))
+keySounds = dict(map(lambda k: (k, sound(k)), keys))
 
 print("Leave this running in the background, playing keyboard clicks as you type in any foreground app.")
 down = {}
