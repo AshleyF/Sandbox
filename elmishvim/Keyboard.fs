@@ -155,15 +155,15 @@ let keyToString = function
     | Some Shift, X -> "X"
     | Some Shift, Y -> "Y"
     | Some Shift, Z -> "Z"
-    | None, Esc -> "<esc>"
-    | None, Tab -> "<tab>"
-    | None, Backspace -> "<bs>"
-    | None, Return -> "<cr>"
+    | None, Esc -> "<Esc>"
+    | None, Tab -> "<Tab>"
+    | None, Backspace -> "<BS>"
+    | None, Return -> "<CR>"
     | None, Space -> " " // <space>
-    | None, Left -> "<left>"
-    | None, Right -> "<right>"
-    | None, Up -> "<up>"
-    | None, Down -> "<down>"
+    | None, Left -> "<Left>"
+    | None, Right -> "<Right>"
+    | None, Up -> "<Up>"
+    | None, Down -> "<Down>"
     | None, Tilde -> "~"
     | None, Bang -> "!"
     | None, At -> "@"
@@ -211,7 +211,12 @@ let keyToString = function
     | Some Shift, Right -> "<S-Right>"
     | m, k -> failwith $"Unexpected console key ({m} {k})"
 
-let keyToChar key = let str = keyToString key in if str.Length = 1 then Some str[0] else None
+let keyToChar key =
+    match keyToString key with
+    | str when str.Length = 1 -> Some str[0]
+    | "<CR>" -> Some '\n'
+    | "<Tab>" -> Some '\t'
+    | _ -> None
 
 let rec keys () = seq {
     yield Console.ReadKey(true) |> toKey
