@@ -13,6 +13,7 @@ type Key =
     | Minus | Equals | LCurly | RCurly | Pipe | LSquare | RSquare | Backslash
     | Colon | Quote | Semicolon | Tick | LAngle | RAngle | Question | Comma | Dot | Slash
     | STab | SLeft | SRight | CLSquare
+    | C_A | C_B | C_C | C_D | C_E | C_F | C_G | C_H | C_I | C_J | C_K | C_L | C_M | C_N | C_O | C_P | C_Q | C_R | C_S | C_T | C_U | C_V | C_W | C_X | C_Y | C_Z
 
 type Modifier = Shift | Control | Meta
 
@@ -25,6 +26,32 @@ let toKey (k : ConsoleKeyInfo) =
         | ConsoleModifiers.Alt -> Some Meta, false
         | _ -> failwith $"Unexpected modifier ({k.Modifiers})"
     match k.Key, k.KeyChar, k.Modifiers with
+    | ConsoleKey.A, _, ConsoleModifiers.Control -> C_A
+    | ConsoleKey.B, _, ConsoleModifiers.Control -> C_B
+    | ConsoleKey.C, _, ConsoleModifiers.Control -> C_C
+    | ConsoleKey.D, _, ConsoleModifiers.Control -> C_D
+    | ConsoleKey.E, _, ConsoleModifiers.Control -> C_E
+    | ConsoleKey.F, _, ConsoleModifiers.Control -> C_F
+    | ConsoleKey.G, _, ConsoleModifiers.Control -> C_G
+    | ConsoleKey.H, _, ConsoleModifiers.Control -> C_H
+    | ConsoleKey.I, _, ConsoleModifiers.Control -> C_I
+    | ConsoleKey.J, _, ConsoleModifiers.Control -> C_J
+    | ConsoleKey.K, _, ConsoleModifiers.Control -> C_K
+    | ConsoleKey.L, _, ConsoleModifiers.Control -> C_L
+    | ConsoleKey.M, _, ConsoleModifiers.Control -> C_M
+    | ConsoleKey.N, _, ConsoleModifiers.Control -> C_N
+    | ConsoleKey.O, _, ConsoleModifiers.Control -> C_O
+    | ConsoleKey.P, _, ConsoleModifiers.Control -> C_P
+    | ConsoleKey.Q, _, ConsoleModifiers.Control -> C_Q
+    | ConsoleKey.R, _, ConsoleModifiers.Control -> C_R
+    | ConsoleKey.S, _, ConsoleModifiers.Control -> C_S
+    | ConsoleKey.T, _, ConsoleModifiers.Control -> C_T
+    | ConsoleKey.U, _, ConsoleModifiers.Control -> C_U
+    | ConsoleKey.V, _, ConsoleModifiers.Control -> C_V
+    | ConsoleKey.W, _, ConsoleModifiers.Control -> C_W
+    | ConsoleKey.X, _, ConsoleModifiers.Control -> C_X
+    | ConsoleKey.Y, _, ConsoleModifiers.Control -> C_Y
+    | ConsoleKey.Z, _, ConsoleModifiers.Control -> C_Z
     | _, 'a', _ -> A
     | _, 'b', _ -> B
     | _, 'c', _ -> C

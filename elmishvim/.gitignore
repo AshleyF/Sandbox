@@ -6,3 +6,5 @@
 bin/
 obj/
 fable_modules/
+
+.fake
