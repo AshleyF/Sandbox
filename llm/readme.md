@@ -1,4 +1,5 @@
 pip install openai
+pip install pyaudio
 
 brew install portaudio
 https://stackoverflow.com/questions/68251169/unable-to-install-pyaudio-on-m1-mac-portaudio-already-installed
