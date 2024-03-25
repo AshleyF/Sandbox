@@ -15,7 +15,7 @@ and Members = { Members: Member list; IsFinal: bool }
 and Elements = { Elements: Value list; IsFinal: bool }
 and String = { Value: string; IsFinal: bool }
 
-let Parse (json : string) =
+let Parse json =
   let ws = Char.IsWhiteSpace
   let toStr (cs : char list) = cs |> Seq.rev |> String.Concat
   let rec parseNumber num = // called when '+' | '-' | digit seen
